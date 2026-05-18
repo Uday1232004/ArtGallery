@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { resolveImageUrl } from '../lib/axios';
 
 export default function CartSidebar() {
   const { isOpen, closeCart, items, total, removeItem, updateQuantity } = useCartStore();
@@ -60,7 +61,7 @@ export default function CartSidebar() {
           ) : (
             items.map((item) => (
               <div key={item.id} className="flex gap-4 bg-void/30 p-4 border border-white/5 relative group">
-                <img src={item.artwork.image} alt={item.artwork.title} className="w-20 h-24 object-cover sepia-[0.1]" />
+                <img src={resolveImageUrl(item.artwork.image)} alt={item.artwork.title} className="w-20 h-24 object-cover sepia-[0.1]" />
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h4 className="font-serif text-lg text-ivory leading-tight mb-1">{item.artwork.title}</h4>

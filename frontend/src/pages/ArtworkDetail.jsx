@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { gsap } from '../animations/gsap';
-import api from '../lib/axios';
+import api, { resolveImageUrl } from '../lib/axios';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
 import { useCartStore } from '../store/cartStore';
@@ -96,7 +96,7 @@ export default function ArtworkDetail() {
                   <div className="w-full h-full grain-animation bg-noise" />
                 </div>
                 <img 
-                  src={artwork.image} 
+                  src={resolveImageUrl(artwork.image)} 
                   alt={artwork.title} 
                   className="w-full h-auto object-cover shadow-2xl img-cinematic sepia-[0.1]"
                 />

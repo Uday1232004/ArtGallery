@@ -73,7 +73,7 @@ export default function About() {
     <section
       ref={sectionRef}
       id="about"
-      className="relative bg-obsidian py-32 md:py-48 overflow-hidden"
+      className="relative bg-transparent py-32 md:py-48 overflow-hidden"
     >
       <div className="grid-lines absolute inset-0 opacity-50" />
 

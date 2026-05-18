@@ -294,6 +294,7 @@ export default function Exhibitions() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              data-lenis-prevent
               className="relative w-full max-w-4xl bg-carbon border border-white/10 rounded-lg max-h-[90vh] overflow-y-auto z-10 flex flex-col"
             >
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-carbon/50">
@@ -405,7 +406,7 @@ export default function Exhibitions() {
                   {artworks.length === 0 ? (
                     <div className="p-6 text-center text-mist/40 font-sans border border-dashed border-white/5 rounded">No artworks created yet. Add artworks first.</div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-1 bg-void/30 border border-white/5 rounded">
+                    <div data-lenis-prevent className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-1 bg-void/30 border border-white/5 rounded">
                       {artworks.map(art => {
                         const isSelected = selectedArtworks.includes(art.id);
                         return (

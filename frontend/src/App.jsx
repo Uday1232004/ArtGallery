@@ -20,6 +20,7 @@ import AdminArtworks from './pages/admin/Artworks'
 import AdminArtists from './pages/admin/Artists'
 import AdminExhibitions from './pages/admin/Exhibitions'
 import AdminCommissions from './pages/admin/Commissions'
+import AdminLogin from './pages/admin/Login'
 import { useAuthStore } from './store/authStore'
 import { useCartStore } from './store/cartStore'
 
@@ -56,6 +57,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/artworks/:id" element={<ArtworkDetail />} />

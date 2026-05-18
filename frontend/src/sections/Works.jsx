@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, Layers, CheckCircle, Mail, DollarSign, Award, HelpCircle, Heart } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { gsap, ScrollTrigger } from '../animations/gsap'
-import api from '../lib/axios'
+import api, { resolveImageUrl } from '../lib/axios'
 import { useCartStore } from '../store/cartStore'
 import { useWishlistStore } from '../store/wishlistStore'
 import { useAuthStore } from '../store/authStore'
@@ -138,6 +138,8 @@ const mapCategoryToUI = (serverCategory) => {
 export default function Works() {
   const sectionRef = useRef(null)
   const lineRef = useRef(null)
+  const verticalLineRef = useRef(null)
+  const lineClipRef = useRef(null)
   const [activeCat, setActiveCat] = useState('All')
   
   // Selected artwork state for dynamic detail modal
@@ -169,7 +171,7 @@ export default function Works() {
     medium: w.medium,
     category: w.category ? mapCategoryToUI(w.category) : 'Experimental',
     size: w.size || sizes[idx % 3],
-    image: w.image,
+    image: resolveImageUrl(w.image),
     dimensions: w.dimensions || '18" x 24"',
     yearCreated: w.yearCreated || 2025,
     status: w.status || 'AVAILABLE',
@@ -202,6 +204,28 @@ export default function Works() {
           scrollTrigger: { trigger: section, start: 'top 80%' },
         }
       )
+
+      // Vertical connecting line clip-path reveal on scroll
+      if (lineClipRef.current) {
+        const scrollTriggerConfig = {
+          trigger: section,
+          start: 'top 60%',
+          end: 'bottom 40%',
+          scrub: 0.5,
+        }
+        gsap.to(lineClipRef.current, {
+          height: '100%',
+          ease: 'none',
+          scrollTrigger: scrollTriggerConfig,
+        })
+        if (verticalLineRef.current) {
+          gsap.to(verticalLineRef.current, {
+            top: '100%',
+            ease: 'none',
+            scrollTrigger: scrollTriggerConfig,
+          })
+        }
+      }
 
       // Initial grid stagger
       const cards = gsap.utils.toArray(section.querySelectorAll('.work-card'))
@@ -249,8 +273,26 @@ export default function Works() {
   };
 
   return (
-    <section ref={sectionRef} id="gallery" className="relative bg-obsidian py-32 md:py-48 overflow-hidden pencil-texture">
+    <section ref={sectionRef} id="gallery" className="relative bg-transparent py-32 md:py-48 overflow-hidden pencil-texture">
       <div className="grid-lines absolute inset-0 opacity-40" />
+      
+      {/* ── Left-rail connecting timeline line ── */}
+      <div className="absolute left-4 md:left-8 top-0 bottom-0 w-[1px] hidden md:block pointer-events-none z-10" style={{ background: 'rgba(201,169,110,0.06)' }}>
+        {/* Gold fill that grows downward as you scroll */}
+        <div
+          ref={lineClipRef}
+          className="absolute top-0 left-0 w-full overflow-hidden"
+          style={{ height: '0%' }}
+        >
+          <div className="w-full h-[9999px]" style={{ background: 'linear-gradient(to bottom, #C9A96E 0%, rgba(201,169,110,0.25) 85%, transparent 100%)' }} />
+        </div>
+        {/* Glowing dot travelling downward */}
+        <div
+          ref={verticalLineRef}
+          className="absolute w-[8px] h-[8px] rounded-full"
+          style={{ top: '0%', left: '-3.5px', background: '#C9A96E', boxShadow: '0 0 12px 4px rgba(201,169,110,0.6)' }}
+        />
+      </div>
       <div className="max-w-[1600px] mx-auto px-8 md:px-16 relative z-10">
         
         {/* Header */}
@@ -282,9 +324,11 @@ export default function Works() {
           </div>
         </div>
 
-        {/* Masonry Grid */}
-        <div className="masonry-grid">
-          {filteredWorks.map((work, i) => (
+          {/* Masonry Grid */}
+          <div className="relative masonry-wrapper pb-10">
+
+            <div className="masonry-grid relative z-10">
+            {filteredWorks.map((work, i) => (
             <div 
               key={`${work.title}-${i}`} 
               onClick={() => {
@@ -319,8 +363,9 @@ export default function Works() {
               </div>
             </div>
           ))}
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Dynamic Immersive Artwork Details Modal */}
       <AnimatePresence>

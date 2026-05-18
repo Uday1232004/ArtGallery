@@ -34,4 +34,12 @@ const superAdminOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, superAdminOnly };
+const adminOnly = (req, res, next) => {
+  if (req.user && (req.user.role === 'SUPER_ADMIN' || req.user.role === 'MANAGER')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
+  }
+};
+
+module.exports = { protect, superAdminOnly, adminOnly };

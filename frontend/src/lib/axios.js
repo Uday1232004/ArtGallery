@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,5 +28,14 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const resolveImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace('/api', '');
+  return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
 export default api;

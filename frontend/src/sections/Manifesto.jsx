@@ -69,7 +69,7 @@ export default function Manifesto() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="manifesto" className="relative h-screen bg-obsidian flex flex-col items-center justify-center overflow-hidden pencil-texture">
+    <section ref={sectionRef} id="manifesto" className="relative h-screen bg-transparent flex flex-col items-center justify-center overflow-hidden pencil-texture">
       {/* Ambient background glow */}
       <div className="ambient-glow absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(184,155,114,0.1)_0%,transparent_50%)] opacity-5 will-change-transform" />
 

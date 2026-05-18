@@ -10,12 +10,16 @@ import Works from '../sections/Works'
 import Contact from '../sections/Contact'
 import Footer from '../sections/Footer'
 import MarqueeText from '../components/MarqueeText'
+import ScrollingLine from '../components/ScrollingLine'
 
 export default function Home() {
-  const [loaded, setLoaded] = useState(false)
+  const [loaded, setLoaded] = useState(() => {
+    return !!sessionStorage.getItem('hasLoadedBefore')
+  })
   const lenisRef = useLenis()
 
   const handlePreloaderComplete = () => {
+    sessionStorage.setItem('hasLoadedBefore', 'true')
     setLoaded(true)
     // Refresh ScrollTrigger after preloader exits
     setTimeout(() => {
@@ -23,13 +27,25 @@ export default function Home() {
     }, 200)
   }
 
+  useEffect(() => {
+    if (loaded) {
+      setTimeout(() => {
+        ScrollTrigger.refresh()
+      }, 500)
+    }
+  }, [loaded])
+
+  const hasLoadedBefore = sessionStorage.getItem('hasLoadedBefore')
+
   return (
     <>
-      {/* Cinematic preloader */}
-      <Preloader onComplete={handlePreloaderComplete} />
+      {/* Cinematic preloader — only play once per browser session */}
+      {!hasLoadedBefore && (
+        <Preloader onComplete={handlePreloaderComplete} />
+      )}
 
       {/* Main content */}
-      <div className={`transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`relative transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
         
         {/* 1. Hero — pinned mask expansion */}
         <Hero ready={loaded} />
@@ -43,23 +59,29 @@ export default function Home() {
           />
         </div>
 
-        {/* 2. About */}
-        <About />
+        {/* ── Scroll Area Wrapper starting from About ── */}
+        <div className="relative z-0 bg-obsidian">
+          {/* Full-page scroll-drawing SVG snake line — positioned behind text/images */}
+          {loaded && <ScrollingLine />}
 
-        {/* 3. Manifesto — pinned word reveal */}
-        <Manifesto />
+          {/* 2. About */}
+          <About />
 
-        {/* 4. Horizontal Gallery */}
-        <HorizontalGallery />
+          {/* 3. Manifesto — pinned word reveal */}
+          <Manifesto />
 
-        {/* 5. Works — masonry grid */}
-        <Works />
+          {/* 4. Horizontal Gallery */}
+          <HorizontalGallery />
 
-        {/* 6. Contact / Commissions */}
-        <Contact />
+          {/* 5. Works — masonry grid */}
+          <Works />
 
-        {/* 7. Footer */}
-        <Footer />
+          {/* 6. Contact / Commissions */}
+          <Contact />
+
+          {/* 7. Footer */}
+          <Footer />
+        </div>
       </div>
     </>
   )

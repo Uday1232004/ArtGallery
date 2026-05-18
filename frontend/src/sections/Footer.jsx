@@ -44,7 +44,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer ref={footerRef} className="relative bg-obsidian pt-32 pb-12 overflow-hidden pencil-texture">
+    <footer ref={footerRef} className="relative bg-transparent pt-32 pb-12 overflow-hidden pencil-texture">
       <div className="absolute inset-0 bg-gradient-to-t from-void to-transparent z-0" />
 
       <div className="max-w-[1600px] mx-auto px-8 md:px-16 relative z-10 flex flex-col h-full justify-between">

@@ -39,7 +39,17 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-void relative overflow-hidden pencil-texture pt-20">
+    <div className="min-h-screen flex items-center justify-center bg-void relative overflow-hidden pencil-texture px-4 pt-20">
+      {/* Minimal Header Nav */}
+      <div className="absolute top-0 left-0 w-full p-8 flex items-center justify-between z-50">
+        <a href="/" className="font-serif text-lg tracking-[0.3em] text-ivory uppercase font-light hover:text-gold transition-colors">
+          ArtBro Sketches
+        </a>
+        <a href="/" className="font-sans text-[10px] tracking-[0.2em] text-mist hover:text-ivory transition-colors uppercase">
+          Return to Gallery →
+        </a>
+      </div>
+
       {/* Ambient background light */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] bg-gold/10 rounded-full blur-[120px] pointer-events-none" />
 

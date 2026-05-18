@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Layers, CheckCircle, Mail, DollarSign, Award, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { gsap, ScrollTrigger } from '../animations/gsap';
-import api from '../lib/axios';
+import api, { resolveImageUrl } from '../lib/axios';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
@@ -70,7 +70,7 @@ export default function Gallery() {
       medium: w.medium,
       category: w.category ? mapCategoryToUI(w.category) : 'Experimental',
       size: sizes[idx % 3], // Artificial masonry sizing for UI aesthetics
-      image: w.image,
+      image: resolveImageUrl(w.image),
       dimensions: w.dimensions || '18" x 24"',
       yearCreated: w.yearCreated || 2025,
       status: w.status || 'AVAILABLE',

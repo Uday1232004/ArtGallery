@@ -22,6 +22,9 @@ export default function Navbar() {
     const nav = navRef.current
     if (!nav) return
 
+    const hasLoadedBefore = sessionStorage.getItem('hasLoadedBefore');
+    const animationDelay = hasLoadedBefore ? 0.1 : 3.2;
+
     const ctx = gsap.context(() => {
       // Use fromTo to ensure starting/ending opacity is guaranteed even in StrictMode
       gsap.fromTo(nav, 
@@ -31,7 +34,7 @@ export default function Navbar() {
           opacity: 1,
           duration: 1.4,
           ease: 'expo.out',
-          delay: 3.2, // After preloader
+          delay: animationDelay,
         }
       )
     })
@@ -118,13 +121,59 @@ export default function Navbar() {
 
           {/* Icons & CTA */}
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              to={isAuthenticated ? (isAdmin() ? "/admin" : "/profile") : "/login"} 
-              data-cursor-hover 
-              className="text-mist hover:text-ivory transition-colors"
-            >
-              <User size={20} />
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {isAdmin() ? (
+                  <Link
+                    to="/admin"
+                    data-cursor-hover
+                    className="font-sans text-[11px] tracking-[0.2em] text-gold uppercase hover:text-ivory transition-colors duration-300 relative group"
+                  >
+                    Admin Dashboard
+                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                  </Link>
+                ) : (
+                  <Link
+                    to="/profile"
+                    data-cursor-hover
+                    className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
+                  >
+                    Profile
+                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    useAuthStore.getState().logout();
+                    window.location.href = '/';
+                  }}
+                  data-cursor-hover
+                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-red-400 transition-colors duration-300 relative group"
+                >
+                  Logout
+                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-red-400 transition-all duration-400 group-hover:w-full" />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  data-cursor-hover
+                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
+                >
+                  Login
+                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                </Link>
+                <Link
+                  to="/signup"
+                  data-cursor-hover
+                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
+                >
+                  Signup
+                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                </Link>
+              </>
+            )}
             
             <button 
               onClick={openCart}
@@ -177,7 +226,7 @@ export default function Navbar() {
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-6 max-h-[80vh] overflow-y-auto w-full py-6">
           {navItems.map((item, i) => {
              const href = getHref(item.path);
              const isHash = href.startsWith('#');
@@ -186,8 +235,8 @@ export default function Navbar() {
                 key={item.name}
                 href={href}
                 onClick={() => setMenuOpen(false)}
-                className="font-serif text-4xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
-                style={{ transitionDelay: `${i * 60}ms` }}
+                className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
+                style={{ transitionDelay: `${i * 40}ms` }}
               >
                 {item.name}
               </a>
@@ -196,20 +245,72 @@ export default function Navbar() {
                 key={item.name}
                 to={item.path}
                 onClick={() => setMenuOpen(false)}
-                className="font-serif text-4xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
-                style={{ transitionDelay: `${i * 60}ms` }}
+                className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
+                style={{ transitionDelay: `${i * 40}ms` }}
               >
                 {item.name}
               </Link>
              );
           })}
+
+          <div className="w-12 h-px bg-white/10 my-2" />
+
+          {isAuthenticated ? (
+            <>
+              {isAdmin() ? (
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="font-sans text-xs tracking-[0.2em] text-gold uppercase hover:text-ivory transition-colors duration-300"
+                >
+                  Admin Dashboard
+                </Link>
+              ) : (
+                <Link
+                  to="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="font-sans text-xs tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300"
+                >
+                  Profile
+                </Link>
+              )}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  useAuthStore.getState().logout();
+                  window.location.href = '/';
+                }}
+                className="font-sans text-xs tracking-[0.2em] text-red-400 uppercase hover:text-red-300 transition-colors duration-300"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="font-sans text-xs tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                onClick={() => setMenuOpen(false)}
+                className="font-sans text-xs tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300"
+              >
+                Signup
+              </Link>
+            </>
+          )}
+
+          <div className="w-12 h-px bg-white/10 my-2" />
           
           {getHref('/#contact').startsWith('#') ? (
             <a
               href={getHref('/#contact')}
               onClick={() => setMenuOpen(false)}
-              className="mt-4 font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
-              style={{ transitionDelay: `${navItems.length * 60}ms` }}
+              className="font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
             >
               Request Commission
             </a>
@@ -217,8 +318,7 @@ export default function Navbar() {
             <Link
               to="/#contact"
               onClick={() => setMenuOpen(false)}
-              className="mt-4 font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
-              style={{ transitionDelay: `${navItems.length * 60}ms` }}
+              className="font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
             >
               Request Commission
             </Link>

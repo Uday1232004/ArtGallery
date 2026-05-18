@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../lib/axios';
+import api, { resolveImageUrl } from '../../lib/axios';
 import { Plus, Trash2, Edit, Save, X, Image as ImageIcon, Sparkles, ShoppingBag, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -314,7 +314,7 @@ export default function Artworks() {
                   <tr key={art.id} className="hover:bg-white/[0.01] transition-colors group">
                     <td className="p-5">
                       <div className="w-12 h-12 rounded bg-void overflow-hidden border border-white/5 group-hover:border-gold/30 transition-colors">
-                        <img src={art.image} alt={art.title} className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(art.image)} alt={art.title} className="w-full h-full object-cover" />
                       </div>
                     </td>
                     <td className="p-5 font-serif text-base text-cream">{art.title}</td>
@@ -392,6 +392,7 @@ export default function Artworks() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              data-lenis-prevent
               className="relative w-full max-w-4xl bg-carbon border border-white/10 rounded-lg max-h-[90vh] overflow-y-auto z-10 flex flex-col"
             >
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-carbon/50">
@@ -415,7 +416,7 @@ export default function Artworks() {
                   <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Artwork Image *</label>
                   <div className="border border-white/5 bg-void/20 rounded overflow-hidden aspect-[4/3] relative group max-w-md">
                     {previewUrl ? (
-                      <img src={previewUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                      <img src={resolveImageUrl(previewUrl)} alt="Cover Preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-mist/30 font-sans gap-2">
                         <ImageIcon size={32} />

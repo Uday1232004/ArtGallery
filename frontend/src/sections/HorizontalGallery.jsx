@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { gsap } from '../animations/gsap'
 
 const PROCESS_STEPS = [
-  { step: '01', title: 'The Blank Paper', desc: 'Every journey begins with emptiness. Staring at the grain, feeling the texture, waiting for the first mark.', image: 'https://images.unsplash.com/photo-1583344665471-bd1f52d5b6e2?w=700&q=80' },
+  { step: '01', title: 'The Blank Paper', desc: 'Every journey begins with emptiness. Staring at the grain, feeling the texture, waiting for the first mark.', image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=700&q=80' },
   { step: '02', title: 'Finding the Eyes', desc: 'I always start with the eyes. They hold the soul. Once the eyes are looking back at me, the person is alive.', image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=700&q=80' },
   { step: '03', title: 'Building the Shadows', desc: 'Hours of layering graphite. Building depth not with lines, but with the absence of light.', image: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=700&q=80' },
   { step: '04', title: 'The Final Details', desc: 'The subtle highlights, the stray hairs, the glint in the eye. This is where patience is tested.', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=700&q=80' },
@@ -79,9 +79,9 @@ export default function HorizontalGallery() {
   }, [])
 
   return (
-    <section ref={wrapperRef} id="process" className="relative bg-carbon overflow-hidden pencil-texture">
+    <section ref={wrapperRef} id="process" className="relative bg-transparent overflow-hidden pencil-texture">
       {/* Label */}
-      <div className="gallery-label sticky top-0 z-20 pt-12 pb-6 px-8 md:px-16 flex items-center justify-between bg-carbon/60 backdrop-blur-md border-b border-white/5" style={{ opacity: 0 }}>
+      <div className="gallery-label sticky top-0 z-20 pt-12 pb-6 px-8 md:px-16 flex items-center justify-between bg-obsidian/60 backdrop-blur-md border-b border-white/5" style={{ opacity: 0 }}>
         <div className="flex items-center gap-4">
           <span className="font-sans text-[10px] tracking-[0.4em] text-gold uppercase">The Process</span>
           <div className="h-px w-20 bg-white/10" />

@@ -44,7 +44,7 @@ export default function Contact() {
   };
 
   return (
-    <section ref={sectionRef} id="contact" className="relative bg-void py-32 md:py-48 overflow-hidden pencil-texture">
+    <section ref={sectionRef} id="contact" className="relative bg-transparent py-32 md:py-48 overflow-hidden pencil-texture">
       {/* Heavy grain overlay */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none z-10">
         <div className="w-full h-full grain-animation bg-noise" />

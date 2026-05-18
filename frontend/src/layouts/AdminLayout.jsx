@@ -7,7 +7,8 @@ import {
   CalendarDays, 
   MessageSquare,
   LogOut,
-  Package
+  Package,
+  Globe
 } from 'lucide-react';
 
 export default function AdminLayout() {
@@ -56,6 +57,16 @@ export default function AdminLayout() {
               </Link>
             )
           })}
+
+          <div className="h-px bg-white/5 my-4" />
+
+          <Link
+            to="/"
+            className="flex items-center gap-4 px-4 py-3 rounded-md text-gold hover:bg-white/5 transition-all duration-300 border-l-2 border-transparent"
+          >
+            <Globe size={18} className="text-gold" />
+            <span className="font-sans text-xs tracking-wider uppercase font-semibold">View Storefront</span>
+          </Link>
         </nav>
 
         <div className="p-6 border-t border-white/5">
