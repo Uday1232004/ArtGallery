@@ -1,0 +1,267 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────
+// USER SYSTEM
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  avatar       String?  // Cloudinary URL
+  address      String?  @db.Text
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  cartItems    CartItem[]
+  wishlist     WishlistItem[]
+  orders       Order[]
+  reviews      Review[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  USER
+}
+
+// ─────────────────────────────────────────────
+// ARTIST
+// ─────────────────────────────────────────────
+
+model Artist {
+  id             String     @id @default(uuid())
+  name           String
+  bio            String     @db.Text
+  specialization String
+  experience     String?
+  profileImage   String?    // Cloudinary URL
+  socialLinks    Json?      // { instagram, behance, twitter }
+  artworks       Artwork[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// ARTWORK + INVENTORY
+// ─────────────────────────────────────────────
+
+model Artwork {
+  id            String        @id @default(uuid())
+  title         String
+  description   String        @db.Text
+  artworkStory  String?       @db.Text  // Emotional creation story
+  category      Category
+  medium        String
+  price         Float?
+  status        ArtworkStatus @default(AVAILABLE)
+  yearCreated   Int
+  dimensions    String?
+  image         String                 // Primary image URL
+  images        Json?                  // Array of additional image URLs
+  featured      Boolean       @default(false)
+  tags          Json?                  // Array of tag strings
+
+  // Inventory
+  stock         Int           @default(1)
+  isOriginal    Boolean       @default(true)
+
+  artistId      String
+  artist        Artist        @relation(fields: [artistId], references: [id])
+
+  exhibitions   ExhibitionArtwork[]
+  sales         Sale[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum Category {
+  PORTRAIT
+  PEN_ART
+  PAINTING
+  KRISHNA_ART
+  EXPERIMENTAL
+}
+
+enum ArtworkStatus {
+  AVAILABLE
+  SOLD
+  UNAVAILABLE
+}
+
+// ─────────────────────────────────────────────
+// SHOPPING CART
+// ─────────────────────────────────────────────
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  artworkId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artworkId])
+}
+
+// ─────────────────────────────────────────────
+// WISHLIST
+// ─────────────────────────────────────────────
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  artworkId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artworkId])
+}
+
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  status          OrderStatus @default(PENDING)
+  total           Float
+  shippingName    String
+  shippingEmail   String
+  shippingPhone   String?
+  shippingAddress String      @db.Text
+  shippingCity    String
+  shippingPincode String
+  notes           String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  artworkId String
+  quantity  Int     @default(1)
+  price     Float   // Price at time of purchase
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  artwork   Artwork @relation(fields: [artworkId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  artworkId String
+  rating    Int      // 1–5
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artworkId])
+}
+
+// ─────────────────────────────────────────────
+// EXHIBITIONS
+// ─────────────────────────────────────────────
+
+model Exhibition {
+  id          String              @id @default(uuid())
+  name        String
+  theme       String
+  description String              @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  bannerImage String?
+  artworks    ExhibitionArtwork[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model ExhibitionArtwork {
+  exhibitionId String
+  artworkId    String
+  exhibition   Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@id([exhibitionId, artworkId])
+}
+
+// ─────────────────────────────────────────────
+// COMMISSIONS (Custom art requests)
+// ─────────────────────────────────────────────
+
+model Commission {
+  id             String           @id @default(uuid())
+  clientName     String
+  email          String
+  artworkType    String
+  budget         String?
+  deadline       DateTime?
+  message        String           @db.Text
+  referenceImage String?
+  status         CommissionStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+// ─────────────────────────────────────────────
+// LEGACY SALE RECORD
+// ─────────────────────────────────────────────
+
+model Sale {
+  id            String   @id @default(uuid())
+  artworkId     String
+  customerName  String
+  customerEmail String
+  salePrice     Float
+  saleDate      DateTime @default(now())
+  notes         String?  @db.Text
+  artwork       Artwork  @relation(fields: [artworkId], references: [id])
+}

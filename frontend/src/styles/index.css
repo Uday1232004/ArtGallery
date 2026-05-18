@@ -1,0 +1,301 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Custom Properties ───────────────────────────────── */
+:root {
+  --void: #080808;
+  --obsidian: #0D0D0D;
+  --carbon: #141414;
+  --zinc: #1A1A1A;
+  --slate: #242424;
+  --mist: #8A8A8A;
+  --fog: #B0A99F;
+  --cream: #F0EBE3;
+  --ivory: #FAF8F5;
+  --gold: #C9A96E;
+  --ember: #D4845A;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-expo-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-circ: cubic-bezier(0, 0.55, 0.45, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Reset & Base ────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: auto; /* Lenis handles this */
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--obsidian);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  cursor: none; /* Custom cursor */
+}
+
+/* ─── Custom Scrollbar ────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--obsidian); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+/* ─── Selection ───────────────────────────────────────── */
+::selection {
+  background: var(--gold);
+  color: var(--void);
+}
+
+/* ─── Typography Base ─────────────────────────────────── */
+h1, h2, h3, h4, h5 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Lenis Smooth Scroll ─────────────────────────────── */
+html.lenis {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ─── Utility Classes ─────────────────────────────────── */
+.clip-text {
+  overflow: hidden;
+  display: block;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Noise texture overlay */
+.noise-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 9998;
+  mix-blend-mode: overlay;
+}
+
+/* Pencil texture overlay */
+.pencil-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+/* ─── Section Base ────────────────────────────────────── */
+.section {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ─── Grid Lines ──────────────────────────────────────── */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+
+/* ─── Image Treatments ────────────────────────────────── */
+.img-cinematic {
+  filter: contrast(1.05) saturate(0.85);
+  transition: filter 0.6s var(--ease-expo);
+}
+.img-cinematic:hover {
+  filter: contrast(1.1) saturate(1);
+}
+
+/* ─── Horizontal Gallery Container ───────────────────── */
+.horizontal-track {
+  display: flex;
+  gap: 2rem;
+  padding: 0 5vw;
+  will-change: transform;
+}
+
+/* ─── Text Reveal Masks ───────────────────────────────── */
+.word-wrapper {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.word-inner {
+  display: inline-block;
+  transform: translateY(110%);
+}
+
+/* ─── Gradient Overlays ───────────────────────────────── */
+.gradient-fade-bottom {
+  background: linear-gradient(to bottom, transparent 0%, var(--obsidian) 100%);
+}
+
+.gradient-fade-top {
+  background: linear-gradient(to top, transparent 0%, var(--obsidian) 100%);
+}
+
+.gradient-radial-center {
+  background: radial-gradient(ellipse at center, rgba(201,169,110,0.08) 0%, transparent 70%);
+}
+
+/* ─── Line separator ──────────────────────────────────── */
+.line-sep {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+}
+
+/* ─── Custom cursor ───────────────────────────────────── */
+#custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+}
+
+#cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--ivory);
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s var(--ease-expo), height 0.3s var(--ease-expo);
+}
+
+#cursor-ring {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(250, 248, 245, 0.4);
+  border-radius: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s var(--ease-expo), height 0.4s var(--ease-expo), border-color 0.3s;
+}
+
+body:hover #cursor-ring {
+  opacity: 1;
+}
+
+/* Cursor hover state */
+body.cursor-hover #cursor-dot {
+  width: 4px;
+  height: 4px;
+}
+body.cursor-hover #cursor-ring {
+  width: 60px;
+  height: 60px;
+  border-color: var(--gold);
+}
+
+/* ─── Preloader ───────────────────────────────────────── */
+#preloader {
+  position: fixed;
+  inset: 0;
+  background: var(--void);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Masonry Grid ────────────────────────────────────── */
+.masonry-grid {
+  columns: 3;
+  column-gap: 1.5rem;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .masonry-grid { columns: 2; }
+}
+
+@media (max-width: 640px) {
+  .masonry-grid { columns: 1; }
+  body { cursor: auto; }
+  #custom-cursor { display: none; }
+}
+
+/* ─── Animations ──────────────────────────────────────── */
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  20% { transform: translate(3%, 2%); }
+  30% { transform: translate(-1%, 4%); }
+  40% { transform: translate(4%, -1%); }
+  50% { transform: translate(-3%, 3%); }
+  60% { transform: translate(2%, -2%); }
+  70% { transform: translate(-4%, 1%); }
+  80% { transform: translate(1%, -4%); }
+  90% { transform: translate(-2%, 2%); }
+}
+
+.grain-animation {
+  animation: grain 8s steps(1) infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes rotateSlowly {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate-slowly {
+  animation: rotateSlowly 30s linear infinite;
+}
