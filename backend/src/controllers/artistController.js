@@ -7,14 +7,32 @@ const getArtists = async (req, res) => {
   try {
     const artists = await prisma.artist.findMany({
       include: {
+        user: {
+          select: {
+            id: true,
+            email: true
+          }
+        },
         artworks: {
           take: 3,
           orderBy: { createdAt: 'desc' }
+        },
+        highlights: {
+          orderBy: { order: 'asc' }
         }
       }
     });
-    res.json(artists);
+
+    const mapped = artists.map(a => ({
+      ...a,
+      userId: a.user?.id || null,
+      email: a.user?.email || null,
+      user: undefined
+    }));
+
+    res.json(mapped);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -27,12 +45,30 @@ const getArtistById = async (req, res) => {
     const artist = await prisma.artist.findUnique({
       where: { id: req.params.id },
       include: {
-        artworks: true
+        user: {
+          select: {
+            id: true,
+            email: true
+          }
+        },
+        artworks: true,
+        highlights: {
+          include: {
+            items: true
+          },
+          orderBy: { order: 'asc' }
+        }
       }
     });
     
     if (artist) {
-      res.json(artist);
+      const mapped = {
+        ...artist,
+        userId: artist.user?.id || null,
+        email: artist.user?.email || null,
+        user: undefined
+      };
+      res.json(mapped);
     } else {
       res.status(404).json({ message: 'Artist not found' });
     }
@@ -46,7 +82,7 @@ const getArtistById = async (req, res) => {
 // @access  Private
 const createArtist = async (req, res) => {
   try {
-    const { name, bio, specialization, experience, socialLinks } = req.body;
+    const { name, username, bio, website, location, specialization, experience, socialLinks } = req.body;
     
     let profileImage = '';
     if (req.file) {
@@ -61,7 +97,10 @@ const createArtist = async (req, res) => {
     const artist = await prisma.artist.create({
       data: {
         name,
+        username,
         bio,
+        website,
+        location,
         specialization,
         experience,
         profileImage: profileImage || null,
@@ -79,7 +118,7 @@ const createArtist = async (req, res) => {
 // @access  Private
 const updateArtist = async (req, res) => {
   try {
-    const { name, bio, specialization, experience, socialLinks } = req.body;
+    const { name, username, bio, website, location, specialization, experience, socialLinks } = req.body;
     
     const existingArtist = await prisma.artist.findUnique({
       where: { id: req.params.id }
@@ -102,10 +141,13 @@ const updateArtist = async (req, res) => {
     const updatedArtist = await prisma.artist.update({
       where: { id: req.params.id },
       data: {
-        name,
-        bio,
-        specialization,
-        experience,
+        name: name || undefined,
+        username: username || undefined,
+        bio: bio || undefined,
+        website: website || undefined,
+        location: location || undefined,
+        specialization: specialization || undefined,
+        experience: experience || undefined,
         profileImage,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : undefined,
       }

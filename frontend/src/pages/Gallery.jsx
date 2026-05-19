@@ -267,11 +267,11 @@ export default function Gallery() {
                 }}
                 className="masonry-item work-card group relative overflow-hidden rounded-sm cursor-pointer will-change-transform" 
               >
-                <div className={`work-card-inner relative overflow-hidden ${heightMap[work.size]}`}>
+                <div className="work-card-inner relative overflow-hidden w-full h-auto">
                   <img
                     src={work.image}
                     alt={work.title}
-                    className="w-full h-full object-cover img-cinematic transition-transform duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 sepia-[0.2]"
+                    className="w-full h-auto block img-cinematic transition-transform duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 sepia-[0.2]"
                     loading="lazy"
                   />
                   

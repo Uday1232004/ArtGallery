@@ -1,0 +1,26 @@
+{
+  "name": "artgallery",
+  "version": "1.0.0",
+  "description": "This document outlines the architectural details, directory configurations, and Google Cloud Console settings to operate our production-grade Google Authentication ecosystem.",
+  "main": "index.js",
+  "scripts": {
+    "clean-ports": "lsof -ti:5173,5001 | xargs kill -9 2>/dev/null || true",
+    "predev": "npm run clean-ports",
+    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && node src/index.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Uday1232004/ArtGallery.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Uday1232004/ArtGallery/issues"
+  },
+  "homepage": "https://github.com/Uday1232004/ArtGallery#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

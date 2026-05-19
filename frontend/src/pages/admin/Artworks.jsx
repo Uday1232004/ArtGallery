@@ -1,8 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { resolveImageUrl } from '../../lib/axios';
-import { Plus, Trash2, Edit, Save, X, Image as ImageIcon, Sparkles, ShoppingBag, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { 
+  Plus, 
+  Trash2, 
+  Edit, 
+  X, 
+  Image as ImageIcon, 
+  Sparkles, 
+  ShoppingBag, 
+  Eye,
+  Grid,
+  Bookmark,
+  Info,
+  CheckCircle2,
+  Heart,
+  MessageCircle,
+  FileText,
+  Compass,
+  ArrowRight,
+  Camera,
+  Settings,
+  Save
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '../../store/authStore';
+import EditProfileModal from '../../components/profile/EditProfileModal';
 
 const mapUIToServerCategory = (uiCategory) => {
   switch (uiCategory) {
@@ -24,15 +47,23 @@ const mapServerToUICategory = (serverCategory) => {
   }
 };
 
+const categoriesList = ['Realistic Portrait', 'Pen Art', 'Charcoal Sketch', 'Devotional Painting'];
+
 export default function Artworks() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  
+  // Tab states
+  const [activeTab, setActiveTab] = useState('grid'); // 'grid' | 'list'
+  
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArtwork, setEditingArtwork] = useState(null);
   
-  // Filtering States
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
-
-  // Form State
+  // High-Fidelity Modals
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  // Form States
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Pen Art');
   const [medium, setMedium] = useState('');
@@ -60,21 +91,38 @@ export default function Artworks() {
     }
   });
 
-  // Fetch Artists for Form selector
+  // Fetch Artists list
   const { data: artists = [] } = useQuery({
     queryKey: ['admin-artists-list'],
     queryFn: async () => {
       const { data } = await api.get('/artists');
       return data;
-    },
-    onSuccess: (data) => {
-      if (data.length > 0 && !artistId) {
-        setArtistId(data[0].id);
-      }
     }
   });
 
-  // Reset form helper
+  useEffect(() => {
+    if (artists.length > 0 && !artistId) {
+      const matched = artists.find(a => a.userId === user?.id || a.email === user?.email);
+      if (matched) {
+        setArtistId(matched.id);
+      } else {
+        setArtistId(user?.role === 'SUPER_ADMIN' ? 'all' : artists[0].id);
+      }
+    }
+  }, [artists, artistId, user]);
+
+  // Resolve matching artist profile for creator header
+  const currentArtist = artistId && artistId !== 'all'
+    ? artists.find(a => a.id === artistId) 
+    : undefined;
+
+  // Filter artworks: if specific artist selected, show only their artworks; otherwise show all
+  const myArtworks = currentArtist
+    ? artworks.filter(art => art.artistId === currentArtist.id || art.artist?.id === currentArtist.id)
+    : artworks;
+
+
+
   const resetForm = () => {
     setTitle('');
     setCategory('Pen Art');
@@ -89,8 +137,12 @@ export default function Artworks() {
     setIsOriginal(true);
     setStock('1');
     
-    // Auto-select first artist if exists
-    if (artists.length > 0) {
+    const userArtist = artists.find(a => a.userId === user?.id || a.email === user?.email);
+    if (currentArtist) {
+      setArtistId(currentArtist.id);
+    } else if (userArtist) {
+      setArtistId(userArtist.id);
+    } else if (artists.length > 0) {
       setArtistId(artists[0].id);
     } else {
       setArtistId('');
@@ -127,7 +179,6 @@ export default function Artworks() {
     setIsModalOpen(true);
   };
 
-  // Image Selection Handler
   const handleArtChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -135,6 +186,13 @@ export default function Artworks() {
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
+
+  const handleOpenEditProfile = () => {
+    if (!currentArtist) return;
+    setIsProfileModalOpen(true);
+  };
+
+
 
   // Create Mutation
   const createMutation = useMutation({
@@ -146,17 +204,17 @@ export default function Artworks() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-artworks']);
-      queryClient.invalidateQueries(['artworks']); // refresh public gallery lists
+      queryClient.invalidateQueries(['artworks']);
       queryClient.invalidateQueries(['dashboard-analytics']);
       setIsModalOpen(false);
       resetForm();
     },
     onError: (err) => {
-      setErrorMsg(err.response?.data?.message || 'Failed to create artwork entry.');
+      setErrorMsg(err.response?.data?.message || 'Failed to create artwork post.');
     }
   });
 
-  // Edit/Update Mutation
+  // Update Mutation
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
       const { data } = await api.put(`/artworks/${editingArtwork.id}`, formData, {
@@ -171,7 +229,7 @@ export default function Artworks() {
       resetForm();
     },
     onError: (err) => {
-      setErrorMsg(err.response?.data?.message || 'Failed to update artwork entry.');
+      setErrorMsg(err.response?.data?.message || 'Failed to update artwork post.');
     }
   });
 
@@ -188,8 +246,9 @@ export default function Artworks() {
     }
   });
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to permanently delete this artwork from the gallery database? This action is irreversible.')) {
+  const handleDelete = (id, e) => {
+    e.stopPropagation();
+    if (window.confirm('Permanently delete this sketch post from your Instagram-style grid? This action is irreversible.')) {
       deleteMutation.mutate(id);
     }
   };
@@ -197,7 +256,7 @@ export default function Artworks() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim() || !medium.trim() || !price || !artistId) {
-      setErrorMsg('All fields marked with * are required.');
+      setErrorMsg('Required fields (*) must be completed before publishing.');
       return;
     }
 
@@ -229,383 +288,552 @@ export default function Artworks() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-8 w-full h-full animate-pulse">
-        <div className="h-10 bg-white/5 w-1/4 rounded"></div>
-        <div className="h-96 bg-white/5 rounded-lg border border-white/5"></div>
+      <div className="flex flex-col gap-8 w-full animate-pulse pt-6">
+        <div className="h-20 bg-white/5 w-2/3 rounded"></div>
+        <div className="h-80 bg-white/5 rounded border border-white/5"></div>
       </div>
     );
   }
 
   if (isError) {
-    return <div className="text-red-400 font-sans p-6 bg-red-950/20 border border-red-500/20 rounded">Failed to load artworks catalogue. Check database connectivity.</div>;
+    return <div className="text-red-400 font-sans p-6 bg-red-950/20 border border-red-500/20 rounded">Failed to load creator portfolios. Check server logs.</div>;
   }
 
-  // Categories list options
   const categoriesList = ['Pen Art', 'Realistic Portrait', 'Charcoal Sketch', 'Devotional Painting'];
 
-  // Filter artworks list
-  const filteredArtworks = selectedFilter === 'ALL' 
-    ? artworks 
-    : artworks.filter(art => mapServerToUICategory(art.category) === selectedFilter);
+  // Global counts for adminFALLBACK
+  const globalSoldCount = myArtworks.filter(art => art.status === 'SOLD').length;
+  const globalSoldRatio = myArtworks.length > 0 ? Math.round((globalSoldCount / myArtworks.length) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-10">
-      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="font-serif text-4xl text-cream mb-2">Artworks Master Catalogue</h1>
-          <p className="font-sans text-sm text-mist/60">Publish new drawings, set sold statuses, configure pricing tags, and toggle homepage highlighting.</p>
+    <div className="flex flex-col gap-8 font-sans text-ivory">
+
+      {/* ─────────────── PREMIUM CENTERED CREATOR PROFILE HEADER ─────────────── */}
+      <header className="flex flex-col items-center justify-center text-center gap-6 pb-10 border-b border-white/5 max-w-4xl mx-auto w-full">
+        
+        {/* Clean Luxury Avatar */}
+        <div className="relative flex-shrink-0">
+          <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border border-gold/30 bg-zinc-950 p-1 shadow-xl">
+            <img
+              src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'}
+              alt=""
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
         </div>
-        <button
-          onClick={handleOpenCreate}
-          className="self-start sm:self-auto bg-gold text-void py-3 px-6 rounded text-xs font-sans uppercase tracking-widest font-semibold flex items-center gap-2 hover:bg-gold/90 transition-all duration-300"
-        >
-          <Plus size={14} /> Add Artwork
-        </button>
+
+        {/* Creator Specs */}
+        <div className="flex flex-col items-center gap-4 w-full">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <h1 className="font-serif text-2xl text-cream tracking-wide font-light uppercase">
+                {currentArtist?.name || 'ArtBro Curator'}
+              </h1>
+              {currentArtist?.isVerified && (
+                <CheckCircle2 size={15} className="text-gold fill-gold/10" />
+              )}
+            </div>
+            {currentArtist?.username && (
+              <span className="font-sans text-[10px] tracking-[0.2em] text-gold uppercase font-semibold">
+                @{currentArtist.username}
+              </span>
+            )}
+          </div>
+          
+          {/* Action Row */}
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button
+              onClick={handleOpenCreate}
+              className="bg-gold text-void px-6 py-2 rounded-none font-sans text-[10px] tracking-[0.2em] uppercase font-bold hover:bg-cream hover:text-void transition-all duration-300 shadow-lg"
+            >
+              + Add Post
+            </button>
+            
+            {currentArtist && (
+              <button
+                onClick={handleOpenEditProfile}
+                className="border border-gold/20 hover:border-gold/50 text-cream px-6 py-2 rounded-none font-sans text-[10px] tracking-[0.2em] uppercase font-bold hover:bg-gold/5 transition-all duration-300"
+              >
+                Edit Profile
+              </button>
+            )}
+
+            {user?.role === 'SUPER_ADMIN' && (
+              <div className="flex items-center bg-zinc-950 border border-white/5 px-4 py-1.5 rounded-none text-[9px] text-mist/60 gap-2">
+                <span className="uppercase tracking-widest text-[8px]">Acting As:</span>
+                <select 
+                  value={artistId} 
+                  onChange={(e) => setArtistId(e.target.value)}
+                  className="bg-transparent text-gold outline-none border-none cursor-pointer font-bold uppercase tracking-widest"
+                >
+                  <option value="all" className="bg-zinc-950 text-cream">All Artists</option>
+                  {artists.map(art => <option key={art.id} value={art.id} className="bg-zinc-950 text-cream">{art.name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="flex gap-12 font-sans text-xs border-y border-white/5 py-3 w-full justify-center max-w-md my-2">
+            <div className="text-center">
+              <span className="block font-serif text-lg text-cream leading-tight">{myArtworks.length}</span>
+              <span className="text-[9px] tracking-widest text-mist/40 uppercase">posts</span>
+            </div>
+            <div className="text-center">
+              <span className="block font-serif text-lg text-cream leading-tight">
+                {currentArtist?.followersCount?.toLocaleString('en-US') || '0'}
+              </span>
+              <span className="text-[9px] tracking-widest text-mist/40 uppercase">followers</span>
+            </div>
+            <div className="text-center">
+              <span className="block font-serif text-lg text-cream leading-tight">
+                {currentArtist?.followingCount?.toLocaleString('en-US') || '0'}
+              </span>
+              <span className="text-[9px] tracking-widest text-mist/40 uppercase">following</span>
+            </div>
+          </div>
+
+          {/* Bio block */}
+          <div className="font-sans text-[11px] text-mist/80 max-w-xl leading-relaxed flex flex-col items-center gap-1.5">
+            <span className="font-semibold text-gold/80 tracking-[0.25em] text-[9px] uppercase">
+              {currentArtist?.specialization || 'Fine Art Curator'}
+            </span>
+            <p className="text-mist/70 whitespace-pre-wrap text-center">
+              {currentArtist?.bio || 'Authorized administrator workspace to manage catalog sketches.'}
+            </p>
+            {currentArtist?.website && (
+              <div className="mt-1 flex items-center gap-1.5 text-gold hover:text-cream transition-colors text-[10px] tracking-wider">
+                <Compass size={11} className="stroke-[1.5]" />
+                <a href={currentArtist.website} target="_blank" rel="noreferrer" className="hover:underline">
+                  {currentArtist.website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-white/5 pb-4">
+      {/* ─────────────── TABS TRIGGER BAR ─────────────── */}
+      <div className="flex justify-center gap-16 mb-4">
         <button
-          onClick={() => setSelectedFilter('ALL')}
-          className={`py-2 px-4 rounded text-xs font-sans uppercase tracking-wider transition-all duration-300 ${
-            selectedFilter === 'ALL' ? 'bg-gold/10 text-gold border border-gold/20' : 'text-mist/60 hover:text-cream border border-transparent'
+          onClick={() => setActiveTab('grid')}
+          className={`flex items-center gap-2 py-3 font-sans text-[9px] tracking-[0.25em] uppercase border-t-[1.5px] transition-all duration-300 ${
+            activeTab === 'grid' 
+              ? 'border-cream text-cream font-semibold' 
+              : 'border-transparent text-mist/40 hover:text-mist'
           }`}
         >
-          All Mediums ({artworks.length})
+          <Grid size={11} /> POSTS
         </button>
-        {categoriesList.map(cat => {
-          const count = artworks.filter(a => mapServerToUICategory(a.category) === cat).length;
-          return (
-            <button
-              key={cat}
-              onClick={() => setSelectedFilter(cat)}
-              className={`py-2 px-4 rounded text-xs font-sans uppercase tracking-wider transition-all duration-300 ${
-                selectedFilter === cat ? 'bg-gold/10 text-gold border border-gold/20' : 'text-mist/60 hover:text-cream border border-transparent'
-              }`}
-            >
-              {cat} ({count})
-            </button>
-          );
-        })}
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`flex items-center gap-2 py-3 font-sans text-[9px] tracking-[0.25em] uppercase border-t-[1.5px] transition-all duration-300 ${
+            activeTab === 'list' 
+              ? 'border-cream text-cream font-semibold' 
+              : 'border-transparent text-mist/40 hover:text-mist'
+          }`}
+        >
+          <FileText size={11} /> CATALOG
+        </button>
       </div>
 
-      {/* Artworks Listings Table */}
-      <div className="bg-carbon/20 border border-white/5 rounded-lg overflow-hidden">
-        {filteredArtworks.length === 0 ? (
-          <div className="p-20 text-center text-mist/40 font-sans">
-            No drawings or portraits published in this category yet.
+      {/* ─────────────── TABS CONTAINER ─────────────── */}
+      <main className="w-full">
+        {activeTab === 'grid' ? (
+          <div>
+            {myArtworks.length === 0 ? (
+              <div className="text-center py-20 bg-zinc-950/20 border border-white/5">
+                <p className="font-serif text-base text-gold mb-1">Grid Portfolio Empty</p>
+                <p className="font-sans text-xs text-mist/40">Click "+ Add Post" to publish your first drawing artwork.</p>
+              </div>
+            ) : (
+              /* Instagram 3-column aspect-square grid with admin tools on hover */
+              <div className="grid grid-cols-3 gap-1 md:gap-4">
+                {myArtworks.map((artwork) => (
+                  <div
+                    key={artwork.id}
+                    className="group relative aspect-square bg-zinc-900 overflow-hidden border border-white/5 cursor-pointer"
+                  >
+                    <img
+                      src={resolveImageUrl(artwork.image)}
+                      alt={artwork.title}
+                      className="w-full h-full object-cover filter brightness-95 group-hover:scale-102 transition-transform duration-500"
+                    />
+                    
+                    {/* Hover Admin Actions & stats */}
+                    <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 gap-4">
+                      <div className="text-center">
+                        <h4 className="font-serif text-sm text-cream truncate max-w-[150px] mb-1">{artwork.title}</h4>
+                        <span className="text-[9px] text-gold tracking-wide uppercase font-semibold">{mapServerToUICategory(artwork.category)}</span>
+                      </div>
+                      
+                      <div className="flex gap-3 mt-1">
+                        <button
+                          onClick={() => handleOpenEdit(artwork)}
+                          className="w-9 h-9 rounded-full bg-cream text-void flex items-center justify-center hover:bg-gold transition-colors"
+                          title="Edit Post Details"
+                        >
+                          <Edit size={13} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(artwork.id, e)}
+                          className="w-9 h-9 rounded-full bg-red-500/80 hover:bg-red-500 text-cream flex items-center justify-center transition-colors"
+                          title="Delete Post"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+
+                      <div className="flex gap-4 text-[9px] text-mist/60 mt-2 font-sans">
+                        <span>₹{Number(artwork.price).toLocaleString('en-IN')}</span>
+                        <span className={artwork.status === 'SOLD' ? 'text-red-400' : 'text-green-400'}>{artwork.status}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-carbon/40 font-sans text-[10px] tracking-wider text-mist/60 uppercase">
-                  <th className="p-5">Artwork Preview</th>
-                  <th className="p-5">Title</th>
-                  <th className="p-5">Category</th>
-                  <th className="p-5">Medium / Specs</th>
-                  <th className="p-5">Value / Price</th>
-                  <th className="p-5">Attributes</th>
-                  <th className="p-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 font-sans text-sm text-mist/85">
-                {filteredArtworks.map((art) => (
-                  <tr key={art.id} className="hover:bg-white/[0.01] transition-colors group">
-                    <td className="p-5">
-                      <div className="w-12 h-12 rounded bg-void overflow-hidden border border-white/5 group-hover:border-gold/30 transition-colors">
-                        <img src={resolveImageUrl(art.image)} alt={art.title} className="w-full h-full object-cover" />
-                      </div>
-                    </td>
-                    <td className="p-5 font-serif text-base text-cream">{art.title}</td>
-                    <td className="p-5">
-                      <span className="px-2.5 py-0.5 text-[10px] bg-white/5 rounded border border-white/10 text-mist">
-                        {mapServerToUICategory(art.category)}
-                      </span>
-                    </td>
-                    <td className="p-5">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-ivory">{art.medium}</span>
-                        <span className="text-xs text-mist/50 mt-0.5">{art.dimensions} • {art.yearCreated}</span>
-                      </div>
-                    </td>
-                    <td className="p-5 text-gold font-medium">₹{Number(art.price).toLocaleString('en-IN')}</td>
-                    <td className="p-5">
-                      <div className="flex flex-col gap-1.5">
-                        {art.featured && (
-                          <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-gold">
-                            <Sparkles size={8} /> Featured
+          /* Catalog Details Advanced Table Tab */
+          <div className="bg-carbon/25 border border-white/5 rounded overflow-hidden">
+            {myArtworks.length === 0 ? (
+              <div className="p-20 text-center text-mist/40 font-sans">No drawings catalogued yet.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse font-sans text-sm">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-carbon/40 font-sans text-[10px] tracking-wider text-mist/60 uppercase">
+                      <th className="p-5">Post Preview</th>
+                      <th className="p-5">Title</th>
+                      <th className="p-5">Category</th>
+                      <th className="p-5">Medium Details</th>
+                      <th className="p-5">Valuation</th>
+                      <th className="p-5">Attributes</th>
+                      <th className="p-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-mist/85">
+                    {myArtworks.map((art) => (
+                      <tr key={art.id} className="hover:bg-white/[0.01] transition-colors group">
+                        <td className="p-5">
+                          <div className="w-11 h-11 rounded bg-zinc-950 overflow-hidden border border-white/5">
+                            <img src={resolveImageUrl(art.image)} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        </td>
+                        <td className="p-5 font-serif text-cream text-base">{art.title}</td>
+                        <td className="p-5">
+                          <span className="px-2 py-0.5 text-[9px] bg-white/5 border border-white/10 rounded uppercase text-mist/70 tracking-wider">
+                            {mapServerToUICategory(art.category)}
                           </span>
-                        )}
-                        {art.status === 'SOLD' ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-red-400">
-                            <ShoppingBag size={8} /> Sold Out
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-green-400">
-                            Available
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-5 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(art)}
-                          className="p-2 bg-white/5 hover:bg-gold/20 text-mist hover:text-gold rounded transition-colors"
-                          title="Edit Artwork"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(art.id)}
-                          className="p-2 bg-white/5 hover:bg-red-500/20 text-mist hover:text-red-400 rounded transition-colors"
-                          title="Delete Artwork"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="p-5">
+                          <div className="flex flex-col">
+                            <span>{art.medium}</span>
+                            <span className="text-[10px] text-mist/40 mt-0.5">{art.dimensions} • {art.yearCreated}</span>
+                          </div>
+                        </td>
+                        <td className="p-5 text-gold font-medium">₹{Number(art.price).toLocaleString('en-IN')}</td>
+                        <td className="p-5">
+                          <div className="flex flex-col gap-1">
+                            {art.featured && <span className="text-[8px] tracking-wider uppercase text-gold">Featured</span>}
+                            {art.status === 'SOLD' ? (
+                              <span className="text-[8px] tracking-wider uppercase text-red-400">Sold Out</span>
+                            ) : (
+                              <span className="text-[8px] tracking-wider uppercase text-green-400">Available</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-5 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenEdit(art)}
+                              className="p-2 bg-white/5 hover:bg-gold/20 text-mist hover:text-gold rounded transition-colors"
+                            >
+                              <Edit size={13} />
+                            </button>
+                            <button
+                              onClick={(e) => handleDelete(art.id, e)}
+                              className="p-2 bg-white/5 hover:bg-red-500/20 text-mist hover:text-red-400 rounded transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Creation / Update Modal overlay */}
+      {/* External Components */}
+      <EditProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        currentArtist={currentArtist} 
+      />
+      
+      {/* ─────────────── POST/EDIT ARTWORK MODAL ─────────────── */}
+
+      {/* ─────────────── HIGH-FIDELITY DOUBLE-PANE POST MODAL ─────────────── */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6">
+            
+            {/* Backdrop blur */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={resetForm}
-              className="absolute inset-0 bg-void/80 backdrop-blur-sm"
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-void/85 backdrop-blur-md"
             />
 
-            {/* Modal Box */}
+            {/* Split Creator Pane */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.96 }}
               data-lenis-prevent
-              className="relative w-full max-w-4xl bg-carbon border border-white/10 rounded-lg max-h-[90vh] overflow-y-auto z-10 flex flex-col"
+              className="relative w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-sm shadow-2xl flex flex-col z-10 max-h-[92vh] overflow-y-auto"
             >
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-carbon/50">
-                <h2 className="font-serif text-2xl text-cream">
-                  {editingArtwork ? 'Edit Artwork Specifications' : 'Publish New Artwork Listing'}
-                </h2>
-                <button onClick={() => setIsModalOpen(false)} className="text-mist hover:text-cream transition-colors">
-                  <X size={20} />
+              {/* Header Title */}
+              <div className="p-4 border-b border-white/5 flex justify-between items-center bg-zinc-950">
+                <span className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase font-bold">
+                  {editingArtwork ? 'Edit published sketch details' : 'Create New Sketch Post'}
+                </span>
+                <button onClick={() => setIsModalOpen(false)} className="text-mist/50 hover:text-cream transition-colors">
+                  <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6">
-                {errorMsg && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 font-sans text-xs rounded">
-                    {errorMsg}
-                  </div>
-                )}
-
-                {/* Cover File Selector */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Artwork Image *</label>
-                  <div className="border border-white/5 bg-void/20 rounded overflow-hidden aspect-[4/3] relative group max-w-md">
+              {/* Main Content Area: Split 2-Columns */}
+              <div className="flex flex-col md:flex-row min-h-[480px]">
+                
+                {/* Column A (Left): Instagram Media Canvas Preview */}
+                <div className="md:w-1/2 bg-black flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-white/5">
+                  <div className="w-full aspect-square max-w-[340px] border border-dashed border-white/10 rounded-sm relative overflow-hidden bg-zinc-950 flex flex-col items-center justify-center group">
+                    
                     {previewUrl ? (
-                      <img src={resolveImageUrl(previewUrl)} alt="Cover Preview" className="w-full h-full object-cover" />
+                      <img 
+                        src={resolveImageUrl(previewUrl)} 
+                        alt="Canvas Preview" 
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-mist/30 font-sans gap-2">
-                        <ImageIcon size={32} />
-                        <span className="text-xs">No artwork file chosen</span>
+                      <div className="flex flex-col items-center gap-3 text-mist/30 text-center p-6 font-sans">
+                        <ImageIcon size={38} className="stroke-[1.5] text-mist/20" />
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] tracking-wider uppercase text-mist/50">Drag drawings here</span>
+                          <span className="text-[8px] text-mist/30">Supports JPG, PNG formats</span>
+                        </div>
                       </div>
                     )}
-                    <label className="absolute inset-0 bg-void/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-cream">
+
+                    {/* Overlay trigger */}
+                    <label className="absolute inset-0 bg-void/80 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-cream">
                       <Plus size={20} className="text-gold mb-1" />
-                      <span className="font-sans text-xs uppercase tracking-wider">Select Drawing File</span>
+                      <span className="font-sans text-[9px] tracking-wider uppercase">Select Media File</span>
                       <input type="file" accept="image/*" onChange={handleArtChange} className="hidden" />
                     </label>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Artwork Title *</label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                      placeholder="e.g. Divine Flute Player"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Category *</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
+                {/* Column B (Right): Instagram metadata details */}
+                <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-between bg-zinc-950 font-sans text-xs">
+                  
+                  {/* Form Specifications */}
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto max-h-[50vh] md:max-h-[60vh] pr-1">
+                    {errorMsg && (
+                      <div className="p-3.5 bg-red-500/10 border border-red-500/20 text-red-200 text-[10px] leading-relaxed rounded-sm">
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    {/* Author IG Header info */}
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                      <div className="w-8 h-8 rounded-full border border-gold/30 overflow-hidden">
+                        <img 
+                          src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1">
+                          <span className="font-semibold text-cream leading-tight">{currentArtist?.name || 'Curator'}</span>
+                          <CheckCircle2 size={11} className="text-blue-400 fill-blue-400" />
+                        </div>
+                        <span className="text-[8px] text-mist/40 leading-none">Creator Studio</span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Post Title *</label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
+                        placeholder="e.g. Divine flute sketch"
+                      />
+                    </div>
+
+                    {/* Shading Category Selector */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Category Medium *</label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
+                      >
+                        {categoriesList.map(cat => <option key={cat} value={cat} className="bg-zinc-950 text-cream">{cat}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Specifications Inline */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Medium Material *</label>
+                        <input
+                          type="text"
+                          value={medium}
+                          onChange={(e) => setMedium(e.target.value)}
+                          required
+                          className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
+                          placeholder="e.g. Pen on Ivory sheet"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Dimensions</label>
+                        <input
+                          type="text"
+                          value={dimensions}
+                          onChange={(e) => setDimensions(e.target.value)}
+                          className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
+                          placeholder="e.g. A3 Size"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Price and Year */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Valuation (INR) *</label>
+                        <input
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          required
+                          className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors text-gold font-semibold"
+                          placeholder="₹15000"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Creation Year</label>
+                        <input
+                          type="number"
+                          value={year}
+                          onChange={(e) => setYear(e.target.value)}
+                          className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Inspo Caption Area */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Write Caption (Description) *</label>
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required
+                        rows="3"
+                        className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors resize-none leading-relaxed"
+                        placeholder="Provide details about line weights and layout..."
+                      />
+                    </div>
+
+                    {/* Story Area */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Emotional Story / Inspiration</label>
+                      <textarea
+                        value={artworkStory}
+                        onChange={(e) => setArtworkStory(e.target.value)}
+                        rows="3"
+                        className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors resize-none leading-relaxed"
+                        placeholder="Detail the spiritual history or creative focus behind the graphite..."
+                      />
+                    </div>
+
+                    {/* Attributes Toggles */}
+                    <div className="flex flex-col gap-2 pt-1 border-t border-white/5 mt-2">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={isOriginal} 
+                          onChange={(e) => setIsOriginal(e.target.checked)}
+                          className="w-3.5 h-3.5 bg-zinc-900 border border-white/5 rounded text-gold focus:ring-0" 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-cream">Original Work</span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={featured} 
+                          onChange={(e) => setFeatured(e.target.checked)}
+                          className="w-3.5 h-3.5 bg-zinc-900 border border-white/5 rounded text-gold focus:ring-0" 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-cream">Feature Post on Homepage</span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={isSold} 
+                          onChange={(e) => setIsSold(e.target.checked)}
+                          className="w-3.5 h-3.5 bg-zinc-900 border border-white/5 rounded text-gold focus:ring-0" 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-cream">Mark Post as Sold Out</span>
+                        </div>
+                      </label>
+                    </div>
+                  </form>
+
+                  {/* Submission Row */}
+                  <div className="border-t border-white/5 pt-4 mt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="flex-1 border border-white/10 hover:border-white/20 text-mist hover:text-cream py-2.5 rounded-sm font-sans uppercase text-[9px] tracking-widest transition-colors font-bold"
                     >
-                      {categoriesList.map(cat => <option key={cat} value={cat} className="bg-carbon text-cream">{cat}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Medium * (e.g. Fine Pen on Ivory Sheet)</label>
-                    <input
-                      type="text"
-                      value={medium}
-                      onChange={(e) => setMedium(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                      placeholder="Fine pen, Pen & Ink"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Dimensions (e.g. A3 Size)</label>
-                    <input
-                      type="text"
-                      value={dimensions}
-                      onChange={(e) => setDimensions(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                      placeholder="e.g. A3 (29.7 x 42 cm)"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Creation Year</label>
-                    <input
-                      type="number"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Valuation Price * (INR)</label>
-                    <input
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                      placeholder="15000"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Creator Artist *</label>
-                    <select
-                      value={artistId}
-                      onChange={(e) => setArtistId(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={createMutation.isLoading || updateMutation.isLoading}
+                      className="flex-1 bg-gold text-void py-2.5 rounded-sm font-sans uppercase text-[9px] tracking-widest font-bold flex items-center justify-center gap-1.5 hover:bg-gold/90 transition-all duration-300"
                     >
-                      {artists.length === 0 ? (
-                        <option value="" className="bg-carbon text-cream">No artists available</option>
-                      ) : (
-                        artists.map(art => <option key={art.id} value={art.id} className="bg-carbon text-cream">{art.name}</option>)
-                      )}
-                    </select>
+                      <Save size={11} />
+                      {createMutation.isLoading || updateMutation.isLoading ? 'Posting...' : 'Publish Post'}
+                    </button>
                   </div>
+
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Description</label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows="4"
-                    className="bg-void/50 border border-white/10 rounded px-4 py-3 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors resize-none leading-relaxed"
-                    placeholder="Provide the physical details..."
-                  />
-                </div>
+              </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Emotional Story / Inspiration</label>
-                  <textarea
-                    value={artworkStory}
-                    onChange={(e) => setArtworkStory(e.target.value)}
-                    rows="4"
-                    className="bg-void/50 border border-white/10 rounded px-4 py-3 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors resize-none leading-relaxed"
-                    placeholder="Provide the emotional history, devotional narrative, or artistic inspirations..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Stock Quantity</label>
-                    <input
-                      type="number"
-                      value={stock}
-                      onChange={(e) => setStock(e.target.value)}
-                      className="bg-void/50 border border-white/10 rounded px-4 py-2.5 font-sans text-sm text-ivory focus:border-gold/50 outline-none transition-colors"
-                      placeholder="1"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-6 pt-2">
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={isOriginal}
-                      onChange={(e) => setIsOriginal(e.target.checked)}
-                      className="w-4 h-4 bg-void/50 border border-white/10 rounded text-gold focus:ring-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-sans text-sm text-cream font-medium">Original Artwork</span>
-                      <span className="font-sans text-xs text-mist/50">Uncheck if this is a limited print.</span>
-                    </div>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={featured}
-                      onChange={(e) => setFeatured(e.target.checked)}
-                      className="w-4 h-4 bg-void/50 border border-white/10 rounded text-gold focus:ring-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-sans text-sm text-cream font-medium">Feature on Homepage</span>
-                      <span className="font-sans text-xs text-mist/50">Showcase this drawing inside the cinematic Hero/Works displays.</span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={isSold}
-                      onChange={(e) => setIsSold(e.target.checked)}
-                      className="w-4 h-4 bg-void/50 border border-white/10 rounded text-gold focus:ring-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-sans text-sm text-cream font-medium">Mark as Sold Out</span>
-                      <span className="font-sans text-xs text-mist/50">Render a 'Sold' badge and prevent incoming acquisition forms.</span>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="border-t border-white/5 pt-6 flex justify-end gap-4 bg-carbon/20 -mx-8 -mb-8 p-6">
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="border border-white/10 hover:border-white/20 text-mist hover:text-cream py-3 px-6 rounded text-xs font-sans uppercase tracking-widest transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createMutation.isLoading || updateMutation.isLoading}
-                    className="bg-gold text-void py-3 px-6 rounded text-xs font-sans uppercase tracking-widest font-semibold flex items-center gap-2 hover:bg-gold/90 transition-all duration-300"
-                  >
-                    <Save size={14} />
-                    {createMutation.isLoading || updateMutation.isLoading ? 'Saving...' : 'Save Artwork'}
-                  </button>
-                </div>
-              </form>
             </motion.div>
           </div>
         )}

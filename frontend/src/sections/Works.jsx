@@ -176,7 +176,8 @@ export default function Works() {
     yearCreated: w.yearCreated || 2025,
     status: w.status || 'AVAILABLE',
     price: w.price || null,
-    description: w.description || 'A cinematic piece created with high passion and meticulous attention to detail.'
+    description: w.description || 'A cinematic piece created with high passion and meticulous attention to detail.',
+    artistName: w.artist?.name || 'ArtBro Gallery'
   }))
 
   const filteredWorks = activeCat === 'All' 
@@ -339,11 +340,11 @@ export default function Works() {
               className="masonry-item work-card group relative overflow-hidden rounded-sm cursor-none will-change-transform" 
               data-cursor-hover
             >
-              <div className={`work-card-inner relative overflow-hidden ${heightMap[work.size]}`}>
+              <div className="work-card-inner relative overflow-hidden w-full h-auto">
                 <img
                   src={work.image}
                   alt={work.title}
-                  className="w-full h-full object-cover img-cinematic transition-transform duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 sepia-[0.2]"
+                  className="w-full h-auto block img-cinematic transition-transform duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 sepia-[0.2]"
                   loading="lazy"
                 />
                 
@@ -352,7 +353,7 @@ export default function Works() {
                 
                 {/* Meta details */}
                 <div className="absolute bottom-6 left-6 right-6 transform transition-transform duration-700 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
-                  <div className="font-sans text-[9px] tracking-[0.3em] text-gold/90 uppercase mb-2 drop-shadow-md">{work.medium}</div>
+                  <div className="font-sans text-[9px] tracking-[0.3em] text-gold/90 uppercase mb-2 drop-shadow-md">{work.medium} • By {work.artistName}</div>
                   <div className="font-serif text-2xl text-cream drop-shadow-lg">{work.title}</div>
                 </div>
 
@@ -412,7 +413,7 @@ export default function Works() {
                   <div className="flex items-center justify-between mb-4">
                     <span className="font-sans text-[10px] tracking-[0.25em] text-gold uppercase flex items-center gap-1.5">
                       <Award size={10} />
-                      {selectedArtwork.medium}
+                      {selectedArtwork.medium} by {selectedArtwork.artistName}
                     </span>
                     <span className={`font-sans text-[9px] tracking-widest px-3 py-1 border rounded-full uppercase ${
                       selectedArtwork.status === 'AVAILABLE' 

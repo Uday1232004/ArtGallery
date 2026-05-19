@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
 import { gsap } from '../animations/gsap';
 import { Shield, Sparkles, User, Key, ArrowLeft } from 'lucide-react';
+import GoogleLoginButton from '../components/auth/GoogleLoginButton';
 
 export default function Login() {
   const [portalMode, setPortalMode] = useState(null); // 'user', 'admin', or null (selection)
@@ -75,7 +76,7 @@ export default function Login() {
       
       if (portalMode === 'admin') {
         // Enforce admin portal restrictions
-        if (role === 'SUPER_ADMIN' || role === 'MANAGER') {
+        if (role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'ARTIST') {
           login(response.data, token);
           navigate('/admin');
         } else {
@@ -264,6 +265,19 @@ export default function Login() {
                   portalMode === 'admin' ? 'Curator Login' : 'Collector Login'
                 )}
               </button>
+
+              {portalMode && (
+                <>
+                  <div className="flex items-center gap-4 my-2">
+                    <div className="h-[1px] bg-white/10 flex-1" />
+                    <span className="font-sans text-[8px] tracking-[0.2em] text-mist/40 uppercase">Or Continue With</span>
+                    <div className="h-[1px] bg-white/10 flex-1" />
+                  </div>
+                  
+                  {/* Google Login Component */}
+                  <GoogleLoginButton portalMode={portalMode} />
+                </>
+              )}
             </form>
             
             <div className="mt-8 flex flex-col items-center gap-4">

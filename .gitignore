@@ -3,3 +3,9 @@ node_modules/
 dist/
 build/
 .DS_Store
+flask_backend/venv/
+backend/uploads/*
+!backend/uploads/seeding/
+!backend/uploads/bangalore_exhibition.jpg
+__pycache__/
+*.pyc

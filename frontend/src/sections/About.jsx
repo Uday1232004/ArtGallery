@@ -81,7 +81,7 @@ export default function About() {
         {/* Section label */}
         <div className="flex items-center gap-4 mb-20">
           <span className="font-sans text-[10px] tracking-[0.4em] text-gold uppercase">
-            The Journey
+            Our Vision
           </span>
           <div className="about-line h-px flex-1 max-w-xs bg-gradient-to-r from-gold/40 to-transparent" style={{ transform: 'scaleX(0)' }} />
         </div>
@@ -111,22 +111,16 @@ export default function About() {
               className="font-serif font-light text-cream leading-tight mb-12"
               style={{ fontSize: 'clamp(2.5rem, 4vw, 4.5rem)' }}
             >
-              Building Dreams Through Code,<br />Expressing Soul Through Art.
+              Connecting Collectors,<br />Creators & Art Lovers.
             </h2>
 
             <div className="max-w-xl">
               <p className="about-para font-sans text-base md:text-lg text-ivory/70 leading-relaxed mb-6">
-                I never took formal art classes. My journey started in childhood, observing the world and trying to capture its quietest emotions on paper. As an engineering student, my days are structured by logic and precision — but my nights are dedicated to the messy, beautiful process of creation.
+                ArtBro Gallery is a premium cinematic platform dedicated to the love of fine sketches, drawings, and paintings. We serve as the ultimate hub for art enthusiasts seeking bespoke portrait commissions, and creators looking to build their digital showcases, present their portfolios, and connect with global collectors.
               </p>
               <p className="about-para font-sans text-base md:text-lg text-ivory/70 leading-relaxed mb-12">
-                Whether it's the intricate realism of a pencil portrait, the devotion in Krishna artworks, or the raw emotion of an experimental sketch, art is my sanctuary. It is how I process the world and share my inner universe.
+                Whether you want to commission a hand-drawn portrait of a loved one, purchase original sketches, or create your own artist account to share your creations directly with a passionate audience, ArtBro Gallery bridges the gap with a seamless, immersive art experience.
               </p>
-
-              {/* Signature */}
-              <div className="about-para mt-12 flex flex-col items-start gap-2">
-                <span className="font-display text-4xl text-gold/80 italic">Uday Chandra</span>
-                <span className="font-sans text-[10px] tracking-[0.2em] text-mist uppercase">Self-Taught Artist & Engineer</span>
-              </div>
             </div>
           </div>
         </div>

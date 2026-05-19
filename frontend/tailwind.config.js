@@ -15,7 +15,20 @@ export default {
         void: '#0A0908', // Warmer deep black
         obsidian: '#121110', // Charcoal/warm dark
         carbon: '#1A1817', // Lighter warm dark
-        zinc: '#22201F',
+        zinc: {
+          DEFAULT: '#22201F',
+          50: '#fafafa',
+          100: '#f4f4f5',
+          200: '#e4e4e7',
+          300: '#d4d4d8',
+          400: '#a1a1aa',
+          500: '#71717a',
+          600: '#52525b',
+          700: '#3f3f46',
+          800: '#27272a',
+          900: '#18181b',
+          950: '#09090b',
+        },
         'soft-ink': '#2A2726',
         mist: '#8A8682',
         fog: '#B0A99F',
@@ -26,6 +39,7 @@ export default {
         ember: '#D4845A',
         sepia: '#8B6355',
       },
+
       letterSpacing: {
         'ultra': '0.4em',
         'wide-xl': '0.25em',

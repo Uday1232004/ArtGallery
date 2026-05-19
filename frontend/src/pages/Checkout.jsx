@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
-import { ShieldCheck, Truck, Lock } from 'lucide-react';
+import { ShieldCheck, Truck, Lock, CreditCard, DollarSign } from 'lucide-react';
 import { gsap } from '../animations/gsap';
 
 export default function Checkout() {
@@ -13,10 +13,14 @@ export default function Checkout() {
   const { items, total, count, clearCart } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
 
+  const [shippingName, setShippingName] = useState(user?.name || '');
+  const [shippingPhone, setShippingPhone] = useState(user?.phone || '');
   const [shippingAddress, setShippingAddress] = useState('');
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [notes, setNotes] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -42,16 +46,20 @@ export default function Checkout() {
     setIsProcessing(true);
     setError('');
 
-    const fullAddress = `${shippingAddress}, ${city}, ${country} - ${postalCode}`;
-
     try {
       // Simulate real payment delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const res = await api.post('/orders', {
-        shippingAddress: fullAddress,
-        // Mock payment ID for academic purposes
-        paymentId: 'MOCK_PAYMENT_' + Math.random().toString(36).substr(2, 9).toUpperCase()
+        shippingName,
+        shippingEmail: user?.email,
+        shippingPhone,
+        shippingAddress,
+        shippingCity: city,
+        shippingPincode: postalCode,
+        notes,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'ONLINE' ? 'PAID' : 'PENDING'
       });
 
       await clearCart();
@@ -86,9 +94,27 @@ export default function Checkout() {
 
                 <div>
                   <h3 className="font-sans text-xs tracking-[0.2em] text-gold uppercase mb-6 border-b border-white/5 pb-4">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                      <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Name</label>
+                      <input 
+                        type="text" required value={shippingName} onChange={e => setShippingName(e.target.value)}
+                        className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors" 
+                        placeholder="Full Name"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Email</label>
+                      <input type="email" disabled value={user?.email || ''} className="w-full bg-void/30 border border-white/10 px-4 py-3 font-sans text-sm text-mist cursor-not-allowed" />
+                    </div>
+                  </div>
                   <div className="mb-4">
-                    <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Email</label>
-                    <input type="email" disabled value={user?.email || ''} className="w-full bg-void/30 border border-white/10 px-4 py-3 font-sans text-sm text-mist cursor-not-allowed" />
+                    <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Phone Number</label>
+                    <input 
+                      type="tel" required value={shippingPhone} onChange={e => setShippingPhone(e.target.value)}
+                      className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors" 
+                      placeholder="e.g. +1 (555) 019-9000"
+                    />
                   </div>
                 </div>
 
@@ -126,18 +152,64 @@ export default function Checkout() {
                         className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors" 
                       />
                     </div>
+                    <div>
+                      <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Order Notes (Optional)</label>
+                      <textarea 
+                        value={notes} onChange={e => setNotes(e.target.value)}
+                        className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors h-24 resize-none" 
+                        placeholder="Notes for delivery or artist instructions..."
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-sans text-xs tracking-[0.2em] text-gold uppercase mb-6 border-b border-white/5 pb-4">Payment</h3>
-                  <div className="bg-void/50 border border-white/10 p-6 flex flex-col items-center justify-center text-center space-y-4">
-                    <Lock size={24} className="text-gold/50" />
-                    <p className="font-sans text-xs text-mist leading-relaxed">
-                      This is a portfolio project environment.<br/>No actual payment will be processed.
-                    </p>
-                    <div className="text-[10px] uppercase tracking-widest bg-gold/10 text-gold px-4 py-1.5 border border-gold/20">Academic Mode Active</div>
+                  <h3 className="font-sans text-xs tracking-[0.2em] text-gold uppercase mb-6 border-b border-white/5 pb-4">Payment Method</h3>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('COD')}
+                      className={`flex flex-col items-center justify-center p-6 border transition-all ${
+                        paymentMethod === 'COD'
+                          ? 'border-gold bg-gold/10 text-gold'
+                          : 'border-white/10 bg-void/30 text-mist hover:border-white/20'
+                      }`}
+                    >
+                      <DollarSign size={20} className="mb-2" />
+                      <span className="font-sans text-[11px] uppercase tracking-widest font-bold">Cash on Delivery</span>
+                      <span className="font-sans text-[9px] text-mist/60 mt-1">Pay with cash upon delivery</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('ONLINE')}
+                      className={`flex flex-col items-center justify-center p-6 border transition-all ${
+                        paymentMethod === 'ONLINE'
+                          ? 'border-gold bg-gold/10 text-gold'
+                          : 'border-white/10 bg-void/30 text-mist hover:border-white/20'
+                      }`}
+                    >
+                      <CreditCard size={20} className="mb-2" />
+                      <span className="font-sans text-[11px] uppercase tracking-widest font-bold">Card Payment</span>
+                      <span className="font-sans text-[9px] text-mist/60 mt-1">Pay now securely (academic)</span>
+                    </button>
                   </div>
+
+                  {paymentMethod === 'COD' ? (
+                    <div className="bg-void/50 border border-white/10 p-6 flex flex-col items-center justify-center text-center space-y-3">
+                      <Truck size={24} className="text-gold/50" />
+                      <p className="font-sans text-xs text-mist leading-relaxed">
+                        Your order will be verified and dispatched immediately.<br/>You will pay in cash upon receiving your artwork.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-void/50 border border-white/10 p-6 flex flex-col items-center justify-center text-center space-y-3">
+                      <Lock size={24} className="text-gold/50" />
+                      <p className="font-sans text-xs text-mist leading-relaxed">
+                        This is a portfolio project environment.<br/>No actual card payment will be charged.
+                      </p>
+                      <div className="text-[10px] uppercase tracking-widest bg-gold/10 text-gold px-4 py-1.5 border border-gold/20">Academic Mode Active</div>
+                    </div>
+                  )}
                 </div>
 
                 <button 

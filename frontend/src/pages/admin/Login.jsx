@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../lib/axios';
 import { gsap } from '../../animations/gsap';
+import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -30,11 +31,11 @@ export default function AdminLogin() {
       const response = await api.post('/auth/login', { email, password });
       const { role, token } = response.data;
       
-      if (role === 'SUPER_ADMIN' || role === 'MANAGER') {
+      if (role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'ARTIST') {
         login(response.data, token);
         navigate('/admin');
       } else {
-        setError('Access Denied: This portal is reserved for administrators.');
+        setError('Access Denied: This portal is reserved for administrators and artists.');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed');
@@ -98,6 +99,14 @@ export default function AdminLogin() {
                 'Access Dashboard'
               )}
             </button>
+
+            <div className="flex items-center gap-4 my-2">
+              <div className="h-[1px] bg-white/10 flex-1" />
+              <span className="font-sans text-[8px] tracking-[0.2em] text-mist/40 uppercase">Or Continue With</span>
+              <div className="h-[1px] bg-white/10 flex-1" />
+            </div>
+
+            <GoogleLoginButton portalMode="admin" />
           </form>
           
           <div className="mt-8 flex flex-col items-center gap-4">

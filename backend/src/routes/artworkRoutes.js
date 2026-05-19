@@ -7,16 +7,16 @@ const {
   updateArtwork,
   deleteArtwork,
 } = require('../controllers/artworkController');
-const { protect, superAdminOnly, adminOnly } = require('../middlewares/authMiddleware');
+const { protect, superAdminOnly, adminOnly, adminOrArtist } = require('../middlewares/authMiddleware');
 const { upload } = require('../config/cloudinary');
 
 router.route('/')
   .get(getArtworks)
-  .post(protect, adminOnly, upload.single('image'), createArtwork);
+  .post(protect, adminOrArtist, upload.single('image'), createArtwork);
 
 router.route('/:id')
   .get(getArtworkById)
-  .put(protect, adminOnly, upload.single('image'), updateArtwork)
+  .put(protect, adminOrArtist, upload.single('image'), updateArtwork)
   .delete(protect, superAdminOnly, deleteArtwork);
 
 module.exports = router;

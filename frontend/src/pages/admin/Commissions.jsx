@@ -1,12 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../lib/axios';
-import { Mail, Clock, CheckCircle, XCircle, FileText, ChevronDown } from 'lucide-react';
+import api, { resolveImageUrl } from '../../lib/axios';
+import { Mail, Clock, CheckCircle, XCircle, FileText, Calendar, DollarSign, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 export default function Commissions() {
   const queryClient = useQueryClient();
   const [selectedInquiry, setSelectedInquiry] = useState(null);
+  
+  // Negotiation Modal States
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [negotiatedPrice, setNegotiatedPrice] = useState('');
+  const [negotiatedDeadline, setNegotiatedDeadline] = useState('');
 
   // Fetch all commissions
   const { data: commissions = [], isLoading, isError } = useQuery({
@@ -19,24 +24,44 @@ export default function Commissions() {
 
   // Mutation to update status
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
-      const { data } = await api.put(`/commissions/${id}/status`, { status });
+    mutationFn: async ({ id, status, finalPrice, submissionDate }) => {
+      const { data } = await api.put(`/commissions/${id}/status`, { 
+        status, 
+        finalPrice, 
+        submissionDate 
+      });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['admin-commissions']);
       queryClient.invalidateQueries(['dashboard-analytics']);
-      if (selectedInquiry) {
-        setSelectedInquiry(prev => ({ ...prev, status: mutationVariables.status }));
-      }
+      setSelectedInquiry(data);
+      setShowApproveModal(false);
+      setNegotiatedPrice('');
+      setNegotiatedDeadline('');
     }
   });
 
-  // Track the most recent variables in mutation
-  let mutationVariables = {};
   const handleStatusChange = (id, status) => {
-    mutationVariables = { id, status };
-    updateStatusMutation.mutate({ id, status });
+    if (status === 'APPROVED') {
+      setShowApproveModal(true);
+    } else {
+      updateStatusMutation.mutate({ id, status });
+    }
+  };
+
+  const handleApproveSubmit = (e) => {
+    e.preventDefault();
+    if (!negotiatedPrice || !negotiatedDeadline) {
+      alert('Please define both the Final Negotiated Price and Submission Deadline.');
+      return;
+    }
+    updateStatusMutation.mutate({
+      id: selectedInquiry.id,
+      status: 'APPROVED',
+      finalPrice: parseFloat(negotiatedPrice),
+      submissionDate: negotiatedDeadline
+    });
   };
 
   if (isLoading) {
@@ -72,11 +97,11 @@ export default function Commissions() {
           <h3 className="font-serif text-3xl text-cream">{commissions.length}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
-          <p className="font-sans text-[10px] tracking-wider text-gold/60 uppercase mb-2">Pending</p>
+          <p className="font-sans text-[10px] tracking-wider text-gold/60 uppercase mb-2">Pending Requests</p>
           <h3 className="font-serif text-3xl text-gold">{pendingCount}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
-          <p className="font-sans text-[10px] tracking-wider text-green-400/60 uppercase mb-2">Approved</p>
+          <p className="font-sans text-[10px] tracking-wider text-green-400/60 uppercase mb-2">Approved & Negotiating</p>
           <h3 className="font-serif text-3xl text-green-400">{approvedCount}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
@@ -115,12 +140,12 @@ export default function Commissions() {
                         {comm.status}
                       </span>
                     </div>
-                    <p className="font-sans text-xs text-mist/60 mb-2">{comm.artworkType}</p>
-                    <p className="font-sans text-xs text-mist/80 line-clamp-2">{comm.message}</p>
+                    <p className="font-sans text-xs text-mist/60 mb-2">Subject: {comm.artworkType}</p>
+                    <p className="font-sans text-xs text-mist/85 line-clamp-2">{comm.message}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <span className="font-sans text-[10px] text-mist/40">{new Date(comm.createdAt).toLocaleDateString()}</span>
-                    {comm.budget && <p className="font-sans text-xs text-gold/80 mt-2 font-medium">{comm.budget}</p>}
+                    {comm.budget && <p className="font-sans text-xs text-gold/80 mt-2 font-medium">Budget: {comm.budget}</p>}
                   </div>
                 </button>
               ))
@@ -150,13 +175,44 @@ export default function Commissions() {
                   <span className="text-[10px] font-sans text-mist/40">{new Date(selectedInquiry.createdAt).toLocaleDateString()}</span>
                 </div>
 
+                {/* Shipping & Contact details Display */}
+                <div className="bg-white/[0.02] border border-white/5 p-4 rounded text-xs font-sans space-y-2">
+                  <p className="text-mist/50 uppercase tracking-wider text-[9px] font-semibold">Shipping & Contact Details</p>
+                  <p className="text-ivory"><strong>Client Phone</strong>: {selectedInquiry.phone || 'N/A'}</p>
+                  <p className="text-ivory"><strong>Address</strong>: {selectedInquiry.shippingAddress}, {selectedInquiry.shippingCity} - {selectedInquiry.shippingPincode}</p>
+                </div>
+
+                {/* Refundable Advance authorization Display */}
+                <div className="bg-white/[0.02] border border-white/5 p-4 rounded text-xs font-sans flex justify-between items-center">
+                  <div>
+                    <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-0.5">Advance Authorization</p>
+                    <p className="text-gold font-medium font-serif">${selectedInquiry.advanceAmount || '100.00'}</p>
+                  </div>
+                  <div>
+                    <span className={`px-2 py-0.5 text-[8px] uppercase tracking-wider rounded-sm ${
+                      selectedInquiry.paymentStatus === 'PAID' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      Deposit: {selectedInquiry.paymentStatus}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Approved Terms Display */}
+                {selectedInquiry.status === 'APPROVED' && (
+                  <div className="bg-green-500/10 border border-green-500/25 p-4 rounded text-xs font-sans space-y-2">
+                    <p className="text-green-400 uppercase tracking-wider text-[9px] font-bold">Negotiated Terms</p>
+                    <p className="text-ivory"><strong>Final Agreed Price</strong>: <span className="text-gold font-semibold">${selectedInquiry.finalPrice}</span></p>
+                    <p className="text-ivory"><strong>Submission/Delivery Date</strong>: {new Date(selectedInquiry.submissionDate).toLocaleDateString()}</p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 text-xs font-sans">
                   <div className="bg-white/[0.02] border border-white/5 p-3 rounded">
                     <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-1">Subject</p>
                     <p className="text-ivory font-medium truncate">{selectedInquiry.artworkType}</p>
                   </div>
                   <div className="bg-white/[0.02] border border-white/5 p-3 rounded">
-                    <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-1">Budget Preference</p>
+                    <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-1">Target Budget</p>
                     <p className="text-gold font-medium">{selectedInquiry.budget || 'N/A'}</p>
                   </div>
                 </div>
@@ -171,8 +227,8 @@ export default function Commissions() {
                 {selectedInquiry.referenceImage && (
                   <div>
                     <p className="font-sans text-[10px] tracking-wider text-mist/50 uppercase mb-2">Attached Design / Reference</p>
-                    <a href={selectedInquiry.referenceImage} target="_blank" rel="noreferrer" className="relative group block rounded overflow-hidden aspect-[4/3] border border-white/10">
-                      <img src={selectedInquiry.referenceImage} alt="Reference" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <a href={resolveImageUrl(selectedInquiry.referenceImage)} target="_blank" rel="noreferrer" className="relative group block rounded overflow-hidden aspect-[4/3] border border-white/10">
+                      <img src={resolveImageUrl(selectedInquiry.referenceImage)} alt="Reference" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-void/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <FileText size={16} className="text-gold" />
                         <span className="font-sans text-[10px] uppercase tracking-widest text-cream">View Attachment</span>
@@ -186,14 +242,15 @@ export default function Commissions() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => handleStatusChange(selectedInquiry.id, 'APPROVED')}
+                      disabled={selectedInquiry.status === 'APPROVED'}
                       className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 ${
                         selectedInquiry.status === 'APPROVED'
-                          ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                          ? 'bg-green-500/20 text-green-400 border-green-500/30 cursor-not-allowed'
                           : 'bg-transparent text-mist/70 border-white/10 hover:text-green-400 hover:border-green-500/30 hover:bg-green-500/[0.02]'
                       }`}
                     >
                       <CheckCircle size={14} />
-                      Approve
+                      Approve & Price
                     </button>
                     <button
                       onClick={() => handleStatusChange(selectedInquiry.id, 'COMPLETED')}
@@ -215,7 +272,7 @@ export default function Commissions() {
                       }`}
                     >
                       <XCircle size={14} />
-                      Reject
+                      Reject & Refund
                     </button>
                   </div>
                 </div>
@@ -228,6 +285,63 @@ export default function Commissions() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* APPROVAL & TERMS NEGOTIATION MODAL */}
+      {showApproveModal && selectedInquiry && (
+        <div className="fixed inset-0 bg-void/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-carbon border border-white/10 p-8 max-w-md w-full shadow-2xl relative">
+            <h3 className="font-serif text-2xl text-cream mb-2">Set Commission Terms</h3>
+            <p className="font-sans text-xs text-mist/60 mb-6">Specify the final price and deadline before sending validation back to the collector.</p>
+
+            <form onSubmit={handleApproveSubmit} className="flex flex-col gap-6">
+              <div className="group">
+                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Final Agreed Price ($)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold font-semibold">$</span>
+                  <input
+                    type="number"
+                    value={negotiatedPrice}
+                    onChange={(e) => setNegotiatedPrice(e.target.value)}
+                    required
+                    min="1"
+                    className="w-full bg-void/50 border border-white/10 pl-8 pr-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
+                    placeholder="500.00"
+                  />
+                </div>
+              </div>
+
+              <div className="group">
+                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Target Submission Date</label>
+                <input
+                  type="date"
+                  value={negotiatedDeadline}
+                  onChange={(e) => setNegotiatedDeadline(e.target.value)}
+                  required
+                  className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
+                />
+              </div>
+
+              <div className="flex gap-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowApproveModal(false)}
+                  className="flex-1 py-3 border border-white/10 hover:bg-white/5 font-sans text-[10px] tracking-widest text-cream uppercase transition-all duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateStatusMutation.isLoading}
+                  className="flex-1 py-3 bg-gold text-void font-sans text-[10px] tracking-widest uppercase font-semibold hover:bg-gold/80 transition-all duration-300"
+                >
+                  Confirm Approve
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

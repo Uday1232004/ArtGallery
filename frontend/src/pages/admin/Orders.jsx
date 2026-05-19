@@ -92,7 +92,7 @@ export default function Orders() {
                         ))}
                       </div>
                     </td>
-                    <td className="p-5 text-gold font-medium">${order.totalAmount.toLocaleString()}</td>
+                    <td className="p-5 text-gold font-medium">${order.total?.toLocaleString()}</td>
                     <td className="p-5">
                       <span className={`px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border ${
                         order.status === 'PENDING' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :

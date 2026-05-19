@@ -133,7 +133,7 @@ export default function Hero({ ready }) {
       >
         <div ref={subtagRef} className="mb-6" style={{ opacity: 0 }}>
           <span className="font-sans text-[10px] tracking-[0.5em] text-gold uppercase drop-shadow-sm">
-            Uday Chandra
+            ArtBro Gallery
           </span>
         </div>
 
@@ -142,13 +142,13 @@ export default function Hero({ ready }) {
           className="font-serif font-light text-cream leading-[1] tracking-tight will-change-transform max-w-5xl mx-auto"
           style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)', textShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
         >
-          Every Sketch Holds A Memory.
+          Connecting Creators & Art Lovers.
         </h1>
 
         <div ref={metaRef} className="mt-12 flex flex-col items-center gap-4" style={{ opacity: 0 }}>
           <div className="h-12 w-px bg-gradient-to-b from-gold/50 to-transparent" />
           <span className="font-sans text-[9px] tracking-[0.3em] text-ivory/50 uppercase">
-            Engineering & Art
+            Sketches, Portraits & Custom Commissions
           </span>
         </div>
       </div>

@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { ShoppingCart, User } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
 import { useAuthStore } from '../store/authStore'
+import { resolveImageUrl } from '../lib/axios'
+import { getLenis } from '../animations/lenis'
 
 /**
  * Navbar — transparent initially, fills on scroll
@@ -17,6 +19,18 @@ export default function Navbar() {
   
   const { count, openCart } = useCartStore()
   const { isAuthenticated, user, isAdmin } = useAuthStore()
+
+  const handleHomeClick = (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault()
+      const lenis = getLenis()
+      if (lenis) {
+        lenis.scrollTo(0, { duration: 1.2 })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+  }
 
   useEffect(() => {
     const nav = navRef.current
@@ -53,7 +67,7 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Gallery', path: '/#gallery' },
+    { name: 'Gallery', path: '/gallery' },
     { name: 'Artists', path: '/artists' },
     { name: 'Exhibitions', path: '/exhibitions' },
     { name: 'Story', path: '/#manifesto' },
@@ -83,6 +97,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             to="/"
+            onClick={handleHomeClick}
             className="font-serif text-xl tracking-[0.3em] text-ivory uppercase font-light"
             data-cursor-hover
           >
@@ -109,6 +124,7 @@ export default function Navbar() {
                 <Link
                   key={item.name}
                   to={item.path}
+                  onClick={item.name === 'Home' ? handleHomeClick : undefined}
                   data-cursor-hover
                   className="relative font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 group"
                 >
@@ -126,20 +142,38 @@ export default function Navbar() {
                 {isAdmin() ? (
                   <Link
                     to="/admin"
-                    data-cursor-hover
-                    className="font-sans text-[11px] tracking-[0.2em] text-gold uppercase hover:text-ivory transition-colors duration-300 relative group"
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    Admin Dashboard
-                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
+                      {user?.profileImage ? (
+                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
+                          {user?.name?.charAt(0) || user?.username?.charAt(0) || 'A'}
+                        </div>
+                      )}
+                    </div>
+                    <span className="font-sans text-[11px] tracking-[0.2em] text-gold uppercase hidden lg:block">
+                      {user?.name || user?.username || 'Admin Dashboard'}
+                    </span>
                   </Link>
                 ) : (
                   <Link
                     to="/profile"
-                    data-cursor-hover
-                    className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    Profile
-                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
+                      {user?.profileImage ? (
+                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
+                          {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                        </div>
+                      )}
+                    </div>
+                    <span className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hidden lg:block">
+                      {user?.name || user?.username || 'Profile'}
+                    </span>
                   </Link>
                 )}
                 <button
@@ -188,23 +222,13 @@ export default function Navbar() {
               )}
             </button>
 
-            {getHref('/#contact').startsWith('#') ? (
-            <a
-              href={getHref('/#contact')}
-              data-cursor-hover
-              className="hidden md:flex items-center gap-2 font-sans text-xs tracking-[0.2em] text-void bg-ivory px-6 py-3 uppercase hover:bg-gold hover:text-void transition-all duration-400"
-            >
-              Commission
-            </a>
-          ) : (
             <Link
-              to="/#contact"
+              to="/commissions/request"
               data-cursor-hover
               className="hidden md:flex items-center gap-2 font-sans text-xs tracking-[0.2em] text-void bg-ivory px-6 py-3 uppercase hover:bg-gold hover:text-void transition-all duration-400"
             >
               Commission
             </Link>
-          )}
           </div>
 
           {/* Mobile menu button */}
@@ -244,7 +268,10 @@ export default function Navbar() {
               <Link
                 key={item.name}
                 to={item.path}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => {
+                  setMenuOpen(false);
+                  if (item.name === 'Home') handleHomeClick(e);
+                }}
                 className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
                 style={{ transitionDelay: `${i * 40}ms` }}
               >
@@ -306,23 +333,13 @@ export default function Navbar() {
 
           <div className="w-12 h-px bg-white/10 my-2" />
           
-          {getHref('/#contact').startsWith('#') ? (
-            <a
-              href={getHref('/#contact')}
-              onClick={() => setMenuOpen(false)}
-              className="font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
-            >
-              Request Commission
-            </a>
-          ) : (
             <Link
-              to="/#contact"
+              to="/commissions/request"
               onClick={() => setMenuOpen(false)}
               className="font-sans text-xs tracking-[0.2em] text-void bg-gold px-8 py-4 uppercase hover:bg-ivory transition-all duration-400"
             >
               Request Commission
             </Link>
-          )}
         </div>
         <div className="absolute bottom-10 font-sans text-[10px] tracking-[0.3em] text-mist/60">
           ART THAT FEELS ALIVE

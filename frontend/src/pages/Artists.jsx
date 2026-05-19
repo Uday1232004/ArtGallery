@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Award, Mail, Sparkles, BookOpen } from 'lucide-react'
-import api from '../lib/axios'
+import { Link } from 'react-router-dom'
+import api, { resolveImageUrl } from '../lib/axios'
 
 const FALLBACK_ARTISTS = [
   {
@@ -77,9 +78,9 @@ export default function Artists() {
               {/* Profile Image */}
               <div className="lg:col-span-5 relative group overflow-hidden rounded-sm aspect-[4/5] bg-carbon border border-white/5 shadow-2xl">
                 <img 
-                  src={artist.profileImage || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80'} 
+                  src={resolveImageUrl(artist.profileImage) || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80'} 
                   alt={artist.name} 
-                  className="w-full h-full object-cover img-cinematic mix-blend-luminosity hover:mix-blend-normal group-hover:scale-105 transition-all duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  className="w-full h-full object-cover img-exhibition-hover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent opacity-60 pointer-events-none" />
                 <div className="absolute bottom-6 left-6 font-sans text-[10px] tracking-[0.3em] text-gold/80 uppercase">
@@ -120,14 +121,20 @@ export default function Artists() {
                 </div>
 
                 {/* Connect */}
-                <div className="flex items-center gap-6 mt-4">
-                  <a 
-                    href="#contact" 
+                <div className="flex items-center gap-4 mt-4">
+                  <Link 
+                    to="/commissions/request"
                     className="font-sans text-xs tracking-widest text-void bg-ivory hover:bg-gold hover:text-void px-6 py-3 uppercase transition-all duration-400 flex items-center gap-2"
                   >
                     <Mail size={12} />
-                    Commission Artwork
-                  </a>
+                    Commission Sketch
+                  </Link>
+                  <Link 
+                    to={`/artists/${artist.id}`}
+                    className="font-sans text-xs tracking-widest text-cream bg-white/5 border border-white/10 hover:border-gold hover:text-gold px-6 py-3 uppercase transition-all duration-400"
+                  >
+                    View Artist Space
+                  </Link>
                   {artist.socialLinks?.instagram && (
                     <a 
                       href={artist.socialLinks.instagram}

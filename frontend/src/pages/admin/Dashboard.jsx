@@ -103,7 +103,7 @@ export default function Dashboard() {
                   <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 text-ivory">#{order.id.substring(0,8)}</td>
                     <td className="px-6 py-4">{order.user.name}</td>
-                    <td className="px-6 py-4 text-gold font-medium">${order.totalAmount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-gold font-medium">${order.total?.toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-[9px] uppercase tracking-wider rounded-sm ${
                         order.status === 'PENDING' ? 'bg-orange-500/20 text-orange-400' :

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Calendar, MapPin, Sparkles, ArrowUpRight } from 'lucide-react'
-import api from '../lib/axios'
+import api, { resolveImageUrl } from '../lib/axios'
 
 const FALLBACK_EXHIBITIONS = [
   {
@@ -105,9 +105,9 @@ export default function Exhibitions() {
                   {isEven ? (
                     <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-carbon border border-white/5 shadow-xl group">
                       <img 
-                        src={ex.bannerImage} 
+                        src={resolveImageUrl(ex.bannerImage)} 
                         alt={ex.name} 
-                        className="w-full h-full object-cover img-cinematic mix-blend-luminosity hover:mix-blend-normal group-hover:scale-[1.03] transition-all duration-[1.5s]"
+                        className="w-full h-full object-cover img-exhibition-hover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-void/80 to-transparent pointer-events-none" />
                     </div>
@@ -143,9 +143,9 @@ export default function Exhibitions() {
                   {!isEven ? (
                     <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-carbon border border-white/5 shadow-xl group">
                       <img 
-                        src={ex.bannerImage} 
+                        src={resolveImageUrl(ex.bannerImage)} 
                         alt={ex.name} 
-                        className="w-full h-full object-cover img-cinematic mix-blend-luminosity hover:mix-blend-normal group-hover:scale-[1.03] transition-all duration-[1.5s]"
+                        className="w-full h-full object-cover img-exhibition-hover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-void/80 to-transparent pointer-events-none" />
                     </div>

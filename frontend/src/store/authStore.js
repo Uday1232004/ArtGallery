@@ -9,10 +9,11 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isAdmin: () => {
         const role = get().user?.role;
-        return role === 'SUPER_ADMIN' || role === 'MANAGER';
+        return role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'ARTIST';
       },
       login: (user, token) => set({ user, token, isAuthenticated: true }),
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      updateUser: (updates) => set((state) => ({ user: { ...state.user, ...updates } })),
     }),
     {
       name: 'auth-storage',

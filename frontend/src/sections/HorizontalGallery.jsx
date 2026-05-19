@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react'
 import { gsap } from '../animations/gsap'
 
 const PROCESS_STEPS = [
-  { step: '01', title: 'The Blank Paper', desc: 'Every journey begins with emptiness. Staring at the grain, feeling the texture, waiting for the first mark.', image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=700&q=80' },
-  { step: '02', title: 'Finding the Eyes', desc: 'I always start with the eyes. They hold the soul. Once the eyes are looking back at me, the person is alive.', image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=700&q=80' },
-  { step: '03', title: 'Building the Shadows', desc: 'Hours of layering graphite. Building depth not with lines, but with the absence of light.', image: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=700&q=80' },
-  { step: '04', title: 'The Final Details', desc: 'The subtle highlights, the stray hairs, the glint in the eye. This is where patience is tested.', image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=700&q=80' },
+  { step: '01', title: 'Pen Art', desc: 'Intricate detailing and fine strokes constructed using professional fineliners to bring complex patterns to life.', image: '/Bijay Biswal.jpeg' },
+  { step: '02', title: 'Oil Painting', desc: 'Rich, layered textures and deep chromatic harmony celebrating traditional realistic representation and dynamic shading.', image: '/GIRIDHAR GOPAL.jpeg' },
+  { step: '03', title: 'Abstract Art', desc: 'Fluid expressions, bold movements, and spontaneous creations that explore the pure balance of form, shadow, and color.', image: '/Horse Painting_ Equestrian Elegance.jpeg' },
+  { step: '04', title: 'Digital Art', desc: 'Vibrant digital compositions combining modern tools, rich light values, and imaginative character creations.', image: '/Joyful Golden Retriever iPhone Wallpaper _ Sunflower Field.jpeg' },
+  { step: '05', title: 'Pop Art', desc: 'Retro elements and bold color palettes celebrating contemporary themes and modern vehicle aesthetics.', image: '/Vintage Mustang Wall Art - Hang it in Your Garage or Living Room.jpeg' },
 ]
 
 export default function HorizontalGallery() {
@@ -50,14 +51,14 @@ export default function HorizontalGallery() {
         const cards = track.querySelectorAll('.process-card')
         cards.forEach((card) => {
           gsap.fromTo(card,
-            { opacity: 0, y: 30, scale: 0.98 },
+            { opacity: 0.3, y: 30, scale: 0.98 },
             {
               opacity: 1, y: 0, scale: 1,
               duration: 1, ease: 'expo.out',
               scrollTrigger: {
                 trigger: card,
                 containerAnimation: hsTl,
-                start: 'left 80%',
+                start: 'left 90%',
                 toggleActions: 'play none none none',
               },
             }
@@ -94,7 +95,7 @@ export default function HorizontalGallery() {
       {/* Horizontal track */}
       <div
         ref={trackRef}
-        className="horizontal-track py-20 md:py-32 will-change-transform"
+        className="horizontal-track py-20 md:py-24 will-change-transform"
         style={{ width: 'max-content', display: 'flex', gap: '4rem', alignItems: 'center' }}
       >
         {/* Intro text */}
@@ -113,16 +114,15 @@ export default function HorizontalGallery() {
           <div
             key={step.step}
             className="process-card flex-shrink-0 flex flex-col gap-6"
-            style={{ width: 'clamp(280px, 35vw, 460px)', opacity: 0 }}
+            style={{ width: 'clamp(280px, 32vw, 420px)' }}
           >
             <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
-              <img src={step.image} alt={step.title} className="w-full h-full object-cover img-cinematic mix-blend-luminosity opacity-80" />
+              <img src={step.image} alt={step.title} className="w-full h-full object-cover img-cinematic mix-blend-luminosity opacity-90" />
               <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent opacity-60" />
               <div className="absolute top-4 left-4 font-serif text-4xl text-ivory/20">{step.step}</div>
             </div>
             <div>
-              <h3 className="font-serif text-2xl text-cream mb-2">{step.title}</h3>
-              <p className="font-sans text-sm text-ivory/50 leading-relaxed">{step.desc}</p>
+              <h3 className="font-serif text-2xl text-cream mb-1">{step.title}</h3>
             </div>
           </div>
         ))}

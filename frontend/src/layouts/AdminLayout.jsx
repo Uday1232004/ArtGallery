@@ -19,13 +19,15 @@ export default function AdminLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const isArtist = user?.role === 'ARTIST';
   const navItems = [
     { name: 'Overview', path: '/admin', icon: LayoutDashboard },
     { name: 'Orders', path: '/admin/orders', icon: Package },
     { name: 'Artworks', path: '/admin/artworks', icon: Image },
-    { name: 'Artists', path: '/admin/artists', icon: Users },
-    { name: 'Exhibitions', path: '/admin/exhibitions', icon: CalendarDays },
-    { name: 'Commissions', path: '/admin/commissions', icon: MessageSquare },
+    ...(!isArtist ? [
+      { name: 'Exhibitions', path: '/admin/exhibitions', icon: CalendarDays },
+      { name: 'Commissions', path: '/admin/commissions', icon: MessageSquare },
+    ] : []),
   ];
 
   return (

@@ -146,6 +146,17 @@ html.lenis {
   filter: contrast(1.1) saturate(1);
 }
 
+.img-exhibition-hover {
+  filter: grayscale(1) contrast(1.05);
+  transition: filter 2.4s cubic-bezier(0.25, 1, 0.5, 1), transform 1.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: filter, transform;
+}
+
+.group:hover .img-exhibition-hover {
+  filter: grayscale(0) contrast(1.05) !important;
+  transform: scale(1.05);
+}
+
 /* ─── Horizontal Gallery Container ───────────────────── */
 .horizontal-track {
   display: flex;

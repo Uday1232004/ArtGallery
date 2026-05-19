@@ -29,6 +29,7 @@ const cartRoutes       = require('./routes/cartRoutes');
 const wishlistRoutes   = require('./routes/wishlistRoutes');
 const orderRoutes      = require('./routes/orderRoutes');
 const reviewRoutes     = require('./routes/reviewRoutes');
+const highlightRoutes  = require('./routes/highlightRoutes');
 
 // ─── Register Routes ───────────────────────────────────
 app.use('/api/auth',        authRoutes);
@@ -41,6 +42,7 @@ app.use('/api/cart',        cartRoutes);
 app.use('/api/wishlist',    wishlistRoutes);
 app.use('/api/orders',      orderRoutes);
 app.use('/api/reviews',     reviewRoutes);
+app.use('/api/highlights',  highlightRoutes);
 
 // ─── Global Error Handler ──────────────────────────────
 app.use((err, req, res, next) => {

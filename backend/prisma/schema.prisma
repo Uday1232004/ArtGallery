@@ -20,6 +20,7 @@ model User {
   avatar       String?  // Cloudinary URL
   address      String?  @db.Text
   role         Role     @default(USER)
+  authProvider String   @default("local")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -28,11 +29,15 @@ model User {
   wishlist     WishlistItem[]
   orders       Order[]
   reviews      Review[]
+
+  artistId     String?  @unique
+  artist       Artist?  @relation(fields: [artistId], references: [id])
 }
 
 enum Role {
   SUPER_ADMIN
   MANAGER
+  ARTIST
   USER
 }
 
@@ -41,16 +46,57 @@ enum Role {
 // ─────────────────────────────────────────────
 
 model Artist {
-  id             String     @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
-  bio            String     @db.Text
-  specialization String
+  username       String?      @unique
+  bio            String       @db.Text
+  website        String?
+  location       String?
+  specialization String       // Used as 'Title' / Profession
   experience     String?
-  profileImage   String?    // Cloudinary URL
-  socialLinks    Json?      // { instagram, behance, twitter }
+  profileImage   String?      // Cloudinary URL
+  socialLinks    Json?        // { instagram, behance, twitter }
+  isVerified     Boolean      @default(false)
+  followersCount Int          @default(0)
+  followingCount Int          @default(0)
+  
   artworks       Artwork[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  commissions    Commission[]
+  highlights     Highlight[]
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User?
+}
+
+// ─────────────────────────────────────────────
+// STORY HIGHLIGHTS
+// ─────────────────────────────────────────────
+
+model Highlight {
+  id          String         @id @default(uuid())
+  title       String
+  coverImage  String?        // Cloudinary URL
+  order       Int            @default(0)
+  artistId    String
+  artist      Artist         @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  items       HighlightItem[]
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model HighlightItem {
+  id          String      @id @default(uuid())
+  highlightId String
+  artworkId   String
+  
+  highlight   Highlight   @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  // We do NOT establish a strict relation to Artwork to avoid circular dependency/complexity, 
+  // we just store the artworkId and fetch it.
+  
+  createdAt   DateTime    @default(now())
 }
 
 // ─────────────────────────────────────────────
@@ -79,6 +125,8 @@ model Artwork {
 
   artistId      String
   artist        Artist        @relation(fields: [artistId], references: [id])
+
+  commission    Commission?
 
   exhibitions   ExhibitionArtwork[]
   sales         Sale[]
@@ -157,6 +205,9 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  paymentMethod   String      @default("COD")
+  paymentStatus   String      @default("PENDING")
+
   user            User        @relation(fields: [userId], references: [id])
   items           OrderItem[]
 }
@@ -231,17 +282,34 @@ model ExhibitionArtwork {
 // ─────────────────────────────────────────────
 
 model Commission {
-  id             String           @id @default(uuid())
-  clientName     String
-  email          String
-  artworkType    String
-  budget         String?
-  deadline       DateTime?
-  message        String           @db.Text
-  referenceImage String?
-  status         CommissionStatus @default(PENDING)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id              String           @id @default(uuid())
+  clientName      String
+  email           String
+  phone           String
+  artworkType     String
+  budget          String?
+  deadline        DateTime?
+  message         String           @db.Text
+  referenceImage  String?
+  status          CommissionStatus @default(PENDING)
+  
+  shippingAddress String
+  shippingCity    String
+  shippingPincode String
+  advanceAmount   Float            @default(100.0)
+  paymentStatus   String           @default("PAID")
+  
+  finalPrice      Float?
+  submissionDate  DateTime?
+  
+  artistId        String?
+  artist          Artist?          @relation(fields: [artistId], references: [id])
+  
+  artworkId       String?          @unique
+  artwork         Artwork?         @relation(fields: [artworkId], references: [id], onDelete: SetNull)
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 enum CommissionStatus {

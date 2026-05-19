@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useWishlistStore } from '../store/wishlistStore';
-import api from '../lib/axios';
-import { Package, Heart, Settings, LogOut } from 'lucide-react';
+import { useCartStore } from '../store/cartStore';
+import api, { resolveImageUrl } from '../lib/axios';
+import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
 import { gsap } from '../animations/gsap';
@@ -11,11 +12,15 @@ import { gsap } from '../animations/gsap';
 export default function UserProfile() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const { items: wishlistItems, fetchWishlist } = useWishlistStore();
+  const { addItem, openCart } = useCartStore();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('orders'); // orders, wishlist, settings
+  const [activeTab, setActiveTab] = useState('orders'); // orders, commissions, wishlist, settings
   const [orders, setOrders] = useState([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [commissions, setCommissions] = useState([]);
+  const [isLoadingCommissions, setIsLoadingCommissions] = useState(false);
+  const [addingToCartId, setAddingToCartId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,6 +29,7 @@ export default function UserProfile() {
     }
     fetchWishlist();
     fetchOrders();
+    fetchCommissions();
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -42,6 +48,31 @@ export default function UserProfile() {
       console.error(err);
     } finally {
       setIsLoadingOrders(false);
+    }
+  };
+
+  const fetchCommissions = async () => {
+    setIsLoadingCommissions(true);
+    try {
+      const res = await api.get('/commissions');
+      setCommissions(res.data);
+    } catch (err) {
+      console.error('Failed to load commissions', err);
+    } finally {
+      setIsLoadingCommissions(false);
+    }
+  };
+
+  const handleAddToCart = async (commission) => {
+    if (!commission.artworkId) return;
+    setAddingToCartId(commission.id);
+    try {
+      await addItem(commission.artworkId, 1);
+      openCart();
+    } catch (err) {
+      console.error('Failed to add commission artwork to cart', err);
+    } finally {
+      setAddingToCartId(null);
     }
   };
 
@@ -83,6 +114,14 @@ export default function UserProfile() {
                 }`}
               >
                 <Package size={16} /> My Collection
+              </button>
+              <button 
+                onClick={() => setActiveTab('commissions')}
+                className={`flex items-center gap-4 px-6 py-4 font-sans text-xs uppercase tracking-widest transition-colors ${
+                  activeTab === 'commissions' ? 'bg-gold text-void font-semibold' : 'text-mist hover:bg-void/50 hover:text-ivory'
+                }`}
+              >
+                <MessageSquare size={16} /> My Commissions ({commissions.length})
               </button>
               <button 
                 onClick={() => setActiveTab('wishlist')}
@@ -135,7 +174,7 @@ export default function UserProfile() {
                             </div>
                             <div className="text-right">
                               <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1">Total</p>
-                              <p className="font-serif text-lg text-cream">${order.totalAmount}</p>
+                              <p className="font-serif text-lg text-cream">${order.total?.toLocaleString()}</p>
                             </div>
                           </div>
                           
@@ -153,6 +192,99 @@ export default function UserProfile() {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'commissions' && (
+                <div>
+                  <h2 className="font-serif text-2xl text-cream mb-8">Custom Commission Requests</h2>
+                  
+                  {isLoadingCommissions ? (
+                    <div className="text-mist text-sm animate-pulse">Loading commissions...</div>
+                  ) : commissions.length === 0 ? (
+                    <div className="bg-void/50 border border-white/5 p-12 text-center">
+                      <p className="text-mist font-sans text-sm mb-4">You haven't requested any custom commissions yet.</p>
+                      <button onClick={() => navigate('/commissions/request')} className="text-gold uppercase text-xs tracking-widest hover:text-ivory transition-colors">
+                        Request Custom Sketch
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {commissions.map(comm => (
+                        <div key={comm.id} className="bg-void/50 border border-white/5 p-6 flex flex-col md:flex-row justify-between gap-6">
+                          
+                          {/* Image preview & basic details */}
+                          <div className="flex gap-6 items-start flex-1">
+                            {comm.referenceImage ? (
+                              <img src={resolveImageUrl(comm.referenceImage)} alt="Reference" className="w-20 h-20 object-cover border border-white/10 sepia-[0.1]" />
+                            ) : (
+                              <div className="w-20 h-20 bg-white/5 flex items-center justify-center font-sans text-[10px] text-mist/50 border border-white/10 text-center">No Image</div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-serif text-lg text-cream mb-1">{comm.artworkType}</h4>
+                              <p className="font-sans text-[10px] text-mist/60 uppercase tracking-wider mb-2">Artist: {comm.artist?.name || 'Assigned Artist'}</p>
+                              <p className="font-sans text-xs text-mist/85 line-clamp-2 italic mb-2">"{comm.message}"</p>
+                              
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 font-sans text-[10px] text-mist/50">
+                                <span>Phone: {comm.phone}</span>
+                                <span>•</span>
+                                <span>Shipping: {comm.shippingCity}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status & Purchase Action Button */}
+                          <div className="flex flex-col justify-between items-end text-right min-w-[150px] gap-4">
+                            <div>
+                              <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1 text-[9px]">Status</p>
+                              <span className={`px-2 py-0.5 text-[8px] uppercase tracking-wider font-semibold rounded-sm ${
+                                comm.status === 'PENDING' ? 'bg-gold/20 text-gold' :
+                                comm.status === 'APPROVED' ? 'bg-green-500/20 text-green-400' :
+                                comm.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-red-500/20 text-red-400'
+                              }`}>
+                                {comm.status}
+                              </span>
+                            </div>
+
+                            {comm.status === 'APPROVED' && comm.finalPrice && (
+                              <div className="mt-2 text-right flex flex-col items-end">
+                                <p className="font-sans text-[9px] text-mist/50 mb-0.5">Negotiated Price</p>
+                                <p className="font-serif text-lg text-gold font-semibold mb-2">${comm.finalPrice}</p>
+                                
+                                {comm.artworkId && (
+                                  <button
+                                    onClick={() => handleAddToCart(comm)}
+                                    disabled={addingToCartId === comm.id}
+                                    className="flex items-center gap-2 bg-gold hover:bg-gold/80 text-void font-sans text-[9px] font-bold uppercase tracking-widest px-4 py-2 text-center transition-colors shadow-lg"
+                                  >
+                                    <ShoppingBag size={12} />
+                                    {addingToCartId === comm.id ? 'Adding...' : 'Add to Cart'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {comm.status === 'REJECTED' && (
+                              <div className="text-right">
+                                <p className="font-sans text-[9px] text-red-400/80 bg-red-950/20 px-2 py-1 border border-red-500/10 rounded">
+                                  Refunded: ${comm.advanceAmount || '100.00'}
+                                </p>
+                              </div>
+                            )}
+
+                            {comm.status === 'PENDING' && (
+                              <div>
+                                <p className="font-sans text-[9px] text-mist/50 mb-0.5">Advance Deposit</p>
+                                <p className="font-sans text-xs text-green-400">Paid: ${comm.advanceAmount}</p>
+                              </div>
+                            )}
+                          </div>
+
                         </div>
                       ))}
                     </div>

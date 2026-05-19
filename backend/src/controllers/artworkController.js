@@ -100,6 +100,26 @@ const createArtwork = async (req, res) => {
       return res.status(400).json({ message: 'Artwork image is required' });
     }
 
+    let finalArtistId = artistId;
+    if (req.user.role === 'ARTIST') {
+      const artistProfile = await prisma.artist.findFirst({
+        where: {
+          OR: [
+            { user: { id: req.user.id } },
+            { name: req.user.name }
+          ]
+        }
+      });
+      if (!artistProfile) {
+        return res.status(400).json({ message: 'No linked artist profile found for your account.' });
+      }
+      finalArtistId = artistProfile.id;
+    }
+
+    if (!finalArtistId) {
+      return res.status(400).json({ message: 'Artist assignment is required.' });
+    }
+
     const artwork = await prisma.artwork.create({
       data: {
         title,
@@ -115,7 +135,7 @@ const createArtwork = async (req, res) => {
         featured: featured === 'true',
         stock: stock ? parseInt(stock) : 1,
         isOriginal: isOriginal !== 'false',
-        artistId,
+        artistId: finalArtistId,
       },
     });
 
@@ -164,6 +184,22 @@ const updateArtwork = async (req, res) => {
       }
     }
 
+    let finalArtistId = artistId;
+    if (req.user.role === 'ARTIST') {
+      const artistProfile = await prisma.artist.findFirst({
+        where: {
+          OR: [
+            { user: { id: req.user.id } },
+            { name: req.user.name }
+          ]
+        }
+      });
+      if (!artistProfile || existingArtwork.artistId !== artistProfile.id) {
+        return res.status(403).json({ message: 'You are not authorized to modify this artwork.' });
+      }
+      finalArtistId = artistProfile.id;
+    }
+
     const updatedArtwork = await prisma.artwork.update({
       where: { id: req.params.id },
       data: {
@@ -180,7 +216,7 @@ const updateArtwork = async (req, res) => {
         featured: featured === 'true',
         stock: stock ? parseInt(stock) : undefined,
         isOriginal: isOriginal !== undefined ? isOriginal !== 'false' : undefined,
-        artistId,
+        artistId: finalArtistId,
       },
     });
 

@@ -42,4 +42,12 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, superAdminOnly, adminOnly };
+const adminOrArtist = (req, res, next) => {
+  if (req.user && (req.user.role === 'SUPER_ADMIN' || req.user.role === 'MANAGER' || req.user.role === 'ARTIST')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access Denied: Administrative/Artist privileges required' });
+  }
+};
+
+module.exports = { protect, superAdminOnly, adminOnly, adminOrArtist };

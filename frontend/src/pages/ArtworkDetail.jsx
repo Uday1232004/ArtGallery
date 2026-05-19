@@ -110,7 +110,7 @@ export default function ArtworkDetail() {
                 <div className="flex items-center justify-between mb-6">
                   <span className="font-sans text-[10px] tracking-[0.25em] text-gold uppercase flex items-center gap-1.5">
                     <Award size={12} />
-                    {artwork.medium}
+                    {artwork.medium} by {artwork.artist?.name || 'ArtBro Gallery'}
                   </span>
                   <span className={`font-sans text-[9px] tracking-widest px-3 py-1 border rounded-full uppercase ${
                     artwork.status === 'AVAILABLE' 

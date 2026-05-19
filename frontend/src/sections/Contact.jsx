@@ -66,14 +66,14 @@ export default function Contact() {
               Let's Create<br />Something Timeless.
             </h2>
             <p className="font-sans text-sm md:text-base text-ivory/60 leading-relaxed mb-12 max-w-md">
-              Whether it's a realistic pencil portrait of a loved one or a bespoke spiritual artwork, I take on a limited number of commissions each month to ensure every piece receives the time and emotion it deserves.
+              Whether you need a realistic pencil portrait of a loved one or a custom canvas illustration, our platform makes it easy to connect with artists. Simply submit a request to get in touch with creators and start your custom commission.
             </p>
 
             <div className="space-y-6">
               <div>
-                <p className="font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-1">Direct Email</p>
-                <a href="mailto:art@udaychandra.com" data-cursor-hover className="font-serif text-2xl text-ivory hover:text-gold transition-colors duration-400">
-                  art@udaychandra.com
+                <p className="font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-1">Direct Support Email</p>
+                <a href="mailto:support@artbrogallery.com" data-cursor-hover className="font-serif text-2xl text-ivory hover:text-gold transition-colors duration-400">
+                  support@artbrogallery.com
                 </a>
               </div>
               <div>

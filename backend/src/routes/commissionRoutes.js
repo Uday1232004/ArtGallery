@@ -5,7 +5,7 @@ const { protect } = require('../middlewares/authMiddleware');
 const { upload } = require('../config/cloudinary');
 
 router.route('/')
-  .post(upload.single('referenceImage'), createCommission)
+  .post(protect, upload.single('referenceImage'), createCommission)
   .get(protect, getCommissions);
 
 router.route('/:id/status')

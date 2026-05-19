@@ -14,4 +14,8 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
 })

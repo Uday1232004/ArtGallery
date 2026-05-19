@@ -54,7 +54,7 @@ export default function Footer() {
           <div className="max-w-sm">
             <h3 className="font-serif text-3xl text-cream mb-4">ArtBro Sketches</h3>
             <p className="font-sans text-sm text-ivory/50 leading-relaxed">
-              A premium cinematic art gallery and ecommerce platform exploring the intersection of emotion, logic, and visual storytelling.
+              The premier cinematic art gallery and ecommerce platform for art lovers, portrait commission seekers, and global creators.
             </p>
           </div>
           
