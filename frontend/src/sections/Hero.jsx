@@ -1,18 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from '../animations/gsap'
-import { splitTextIntoWords, parallax } from '../animations/motions'
+import { splitTextIntoWords } from '../animations/motions'
 import ScrollIndicator from '../components/ScrollIndicator'
-
-const PREVIEWS = [
-  { img: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&q=80', top: '15%', left: '10%', size: 'w-64 md:w-80', speed: 0.2 },
-  { img: 'https://images.unsplash.com/photo-1516981442399-a91139e20ff8?w=800&q=80', top: '50%', left: '65%', size: 'w-56 md:w-72', speed: -0.3 },
-  { img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80', top: '65%', left: '20%', size: 'w-48 md:w-60', speed: 0.4 },
-]
 
 export default function Hero({ ready }) {
   const sectionRef = useRef(null)
   const headlineRef = useRef(null)
-  const previewsRef = useRef([])
   const metaRef = useRef(null)
   const subtagRef = useRef(null)
 
@@ -21,7 +14,6 @@ export default function Hero({ ready }) {
 
     const section = sectionRef.current
     const headline = headlineRef.current
-    const previews = previewsRef.current.filter(Boolean)
 
     if (!section || !headline) return
 
@@ -30,17 +22,23 @@ export default function Hero({ ready }) {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ delay: 0.1 })
 
-      // Floating previews slow fade in
-      tl.fromTo(previews,
-        { opacity: 0, scale: 0.9, filter: 'blur(10px)' },
-        { opacity: 0.4, scale: 1, filter: 'blur(0px)', duration: 2.5, ease: 'power2.out', stagger: 0.2 }
+      // Majestic entry for mountains and glowing sun
+      tl.fromTo('.para-sun',
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 2.2, ease: 'power3.out' }
+      )
+
+      tl.fromTo(['.para-back', '.para-mid', '.para-fore'],
+        { y: 120, opacity: 0 },
+        { y: 0, opacity: 1, duration: 2.5, ease: 'power4.out', stagger: 0.15 },
+        '-=1.8'
       )
 
       // Subtitle fades in
       tl.fromTo(subtagRef.current,
         { opacity: 0, y: 12, letterSpacing: '0.8em' },
         { opacity: 1, y: 0, letterSpacing: '0.5em', duration: 1.5, ease: 'expo.out' },
-        '-=2'
+        '-=1.8'
       )
 
       // Words slide up one by one
@@ -54,7 +52,7 @@ export default function Hero({ ready }) {
           duration: 1.2,
           ease: 'expo.out',
         },
-        '-=1.5'
+        '-=1.4'
       )
 
       // Meta line + text
@@ -64,72 +62,117 @@ export default function Hero({ ready }) {
         '-=0.8'
       )
 
-      // Continuous ambient float for previews
-      previews.forEach((p, i) => {
-        gsap.to(p, {
-          y: i % 2 === 0 ? '-15px' : '15px',
-          rotation: i % 2 === 0 ? 1 : -1,
-          duration: 4 + i,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut'
-        })
-      })
-
-      // Scroll-driven parallax
+      // Scroll-driven parallax timeline
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: 'top top',
           end: 'bottom top',
-          scrub: 0.6,
+          scrub: true,
         },
       })
 
-      previews.forEach((p, i) => {
-        scrollTl.to(p, { yPercent: PREVIEWS[i].speed * 200, opacity: 0, ease: 'none' }, 0)
-      })
-
-      scrollTl.to(headline, { yPercent: -40, opacity: 0, ease: 'none' }, 0)
-      scrollTl.to(subtagRef.current, { opacity: 0, y: -20, ease: 'none' }, 0)
-      scrollTl.to(metaRef.current, { opacity: 0, ease: 'none' }, 0)
+      scrollTl.to('.para-sun', { yPercent: 12, ease: 'none' }, 0)
+      scrollTl.to('.para-back', { yPercent: 24, ease: 'none' }, 0)
+      scrollTl.to('.para-mid', { yPercent: 36, ease: 'none' }, 0)
+      scrollTl.to(headline, { yPercent: -15, opacity: 0.15, ease: 'none' }, 0)
+      scrollTl.to(subtagRef.current, { yPercent: -15, opacity: 0, ease: 'none' }, 0)
+      scrollTl.to(metaRef.current, { yPercent: -15, opacity: 0, ease: 'none' }, 0)
+      scrollTl.to('.para-fore', { yPercent: 48, ease: 'none' }, 0)
 
     }, section)
 
-    return () => ctx.revert()
+    // Interactive mouse move parallax sways layers at different speeds
+    const handleMouseMove = (e) => {
+      const { clientX, clientY } = e
+      const mouseX = (clientX / window.innerWidth) - 0.5
+      const mouseY = (clientY / window.innerHeight) - 0.5
+
+      gsap.to('.para-sun', { x: mouseX * 15, y: mouseY * 10, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-back', { x: mouseX * 28, y: mouseY * 15, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-mid', { x: mouseX * 45, y: mouseY * 25, duration: 1.5, ease: 'power2.out' })
+      gsap.to(headline, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
+      gsap.to(subtagRef.current, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
+      gsap.to(metaRef.current, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-fore', { x: mouseX * 65, y: mouseY * 35, duration: 1.5, ease: 'power2.out' })
+    }
+
+    const handleMouseLeave = () => {
+      gsap.to(['.para-sun', '.para-back', '.para-mid', headline, subtagRef.current, metaRef.current, '.para-fore'], {
+        x: 0,
+        y: 0,
+        duration: 2,
+        ease: 'power3.out'
+      })
+    }
+
+    section.addEventListener('mousemove', handleMouseMove)
+    section.addEventListener('mouseleave', handleMouseLeave)
+
+    return () => {
+      ctx.revert()
+      section.removeEventListener('mousemove', handleMouseMove)
+      section.removeEventListener('mouseleave', handleMouseLeave)
+    }
   }, [ready])
 
   return (
     <section
       ref={sectionRef}
       id="hero"
-      className="relative w-full h-screen overflow-hidden bg-void pencil-texture"
+      className="relative w-full h-screen overflow-hidden bg-void pencil-texture select-none"
     >
       {/* Heavy grain overlay */}
-      <div className="absolute inset-0 opacity-[0.06] pointer-events-none z-10">
+      <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ zIndex: 7 }}>
         <div className="w-full h-full grain-animation bg-noise" />
       </div>
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(222,214,199,0.05)_0%,transparent_80%)] z-0" />
+      {/* Sky Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#181512] via-[#0d0c0b] to-[#080808] pointer-events-none" style={{ zIndex: 0 }} />
 
-      {/* Floating Ambient Previews */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {PREVIEWS.map((p, i) => (
-          <div
-            key={i}
-            ref={(el) => (previewsRef.current[i] = el)}
-            className={`absolute aspect-[3/4] ${p.size} opacity-0 mix-blend-luminosity will-change-transform`}
-            style={{ top: p.top, left: p.left }}
-          >
-            <img src={p.img} alt="" className="w-full h-full object-cover rounded-sm" />
-            <div className="absolute inset-0 bg-gradient-to-t from-void to-transparent opacity-60" />
-          </div>
-        ))}
+      {/* Sun / Moon Layer */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none para-sun" style={{ zIndex: 1 }}>
+        <svg className="w-[1440px] h-[800px] max-w-full max-h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#C9A96E" stopOpacity="0.25" />
+              <stop offset="60%" stopColor="#C9A96E" stopOpacity="0.05" />
+              <stop offset="100%" stopColor="#C9A96E" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="720" cy="270" r="150" fill="url(#sunGlow)" />
+          <circle cx="720" cy="270" r="65" fill="#C9A96E" opacity="0.12" />
+        </svg>
       </div>
 
-      {/* ── Main Headline ── */}
+      {/* Layer 1: Distant Mountains */}
+      <div className="absolute inset-0 pointer-events-none para-back" style={{ zIndex: 2 }}>
+        <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
+          <path
+            d="M0,500 L120,410 L250,470 L380,380 L520,460 L680,330 L820,440 L960,360 L1100,430 L1250,340 L1380,420 L1440,390 L1440,850 L0,850 Z"
+            fill="#121212"
+            stroke="rgba(201, 169, 110, 0.12)"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </div>
+
+      {/* Layer 2: Midground Mountains */}
+      <div className="absolute inset-0 pointer-events-none para-mid" style={{ zIndex: 3 }}>
+        <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
+          <path
+            d="M0,560 L180,460 L320,530 L500,420 L640,510 L780,390 L950,490 L1120,410 L1280,500 L1440,430 L1440,850 L0,850 Z"
+            fill="#161616"
+            stroke="rgba(201, 169, 110, 0.22)"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </div>
+
+      {/* ── Main Headline (Sandwiched between Layer 2 and Layer 3) ── */}
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center text-center z-20 px-4 pointer-events-none"
+        className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none"
+        style={{ zIndex: 4 }}
       >
         <div ref={subtagRef} className="mb-6" style={{ opacity: 0 }}>
           <span className="font-sans text-[10px] tracking-[0.5em] text-gold uppercase drop-shadow-sm">
@@ -139,7 +182,7 @@ export default function Hero({ ready }) {
 
         <h1
           ref={headlineRef}
-          className="font-serif font-light text-cream leading-[1] tracking-tight will-change-transform max-w-5xl mx-auto"
+          className="font-serif font-light text-cream leading-[1.05] tracking-tight will-change-transform max-w-5xl mx-auto"
           style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)', textShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
         >
           Connecting Creators & Art Lovers.
@@ -152,6 +195,21 @@ export default function Hero({ ready }) {
           </span>
         </div>
       </div>
+
+      {/* Layer 3: Foreground Mountains */}
+      <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 5 }}>
+        <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
+          <path
+            d="M0,640 L150,560 L350,650 L550,520 L750,620 L980,480 L1200,600 L1350,530 L1440,570 L1440,850 L0,850 Z"
+            fill="#080808"
+            stroke="rgba(201, 169, 110, 0.55)"
+            strokeWidth="2"
+          />
+        </svg>
+      </div>
+
+      {/* Bottom Fade Gradient to void */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-void via-void/90 to-transparent pointer-events-none" style={{ zIndex: 6 }} />
 
       {/* Scroll indicator */}
       <ScrollIndicator />
