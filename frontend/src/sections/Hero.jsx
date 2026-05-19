@@ -9,6 +9,44 @@ const PREVIEWS = [
   { img: 'https://images.unsplash.com/photo-1516981442399-a91139e20ff8?w=800&q=80', top: '48%', left: '82%', size: 'w-36 md:w-44', speed: 0.3 },
 ]
 
+function generateTerrain(width, startY, endY, roughness, seed, minH, maxH) {
+  let m_w = seed;
+  let m_z = 987654321;
+  const random = () => {
+    m_w = (36969 * (m_w & 65535) + (m_w >> 16)) & 4294967295;
+    m_z = (18000 * (m_z & 65535) + (m_z >> 16)) & 4294967295;
+    return (((m_w << 16) + m_z) >>> 0) / 4294967296;
+  }
+
+  const segments = 180; // High segment density for organic, realistic details
+  const heights = new Array(segments + 1);
+  heights[0] = startY;
+  heights[segments] = endY;
+
+  const displace = (l, r, roughnessVal) => {
+    if (r - l <= 1) return;
+    const mid = Math.floor((l + r) / 2);
+    const avg = (heights[l] + heights[r]) / 2;
+    const offset = (random() - 0.5) * roughnessVal * (r - l) * 0.8;
+    
+    // Boundary check to maintain organic layering
+    heights[mid] = Math.max(minH, Math.min(maxH, avg + offset));
+
+    displace(l, mid, roughnessVal);
+    displace(mid, r, roughnessVal);
+  }
+
+  displace(0, segments, roughness);
+
+  let path = `M0,${heights[0].toFixed(1)}`;
+  for (let i = 1; i <= segments; i++) {
+    const x = (i / segments) * width;
+    path += ` L${x.toFixed(1)},${heights[i].toFixed(1)}`;
+  }
+  path += ` L${width},850 L0,850 Z`;
+  return path;
+}
+
 export default function Hero({ ready }) {
   const sectionRef = useRef(null)
   const headlineRef = useRef(null)
@@ -16,26 +54,12 @@ export default function Hero({ ready }) {
   const subtagRef = useRef(null)
   const previewsRef = useRef([])
 
-  // Generate deterministic realistic tall vector mountain ranges matching the reference
+  // Generate deterministic realistic tall mountain ranges with rugged, organic detail
   const mountainPaths = useMemo(() => {
     return {
-      // Distant range (Layer 1)
-      back: "M0,520 L80,480 L150,440 L220,400 L280,360 L340,410 L420,460 L500,420 L580,380 L660,420 L750,450 L830,390 L920,330 L1000,390 L1080,440 L1160,390 L1240,350 L1340,420 L1440,480 L1440,850 L0,850 Z",
-      backSnow1: "M250,380 L280,360 L310,385 Q280,395 250,380 Z",
-      backSnow2: "M890,350 L920,330 L950,355 Q920,365 890,350 Z",
-      backSnow3: "M1210,370 L1240,350 L1270,375 Q1240,385 1210,370 Z",
-
-      // Midground range (Layer 2)
-      mid: "M0,600 L100,540 L200,480 L290,400 L380,320 L480,410 L580,500 L690,370 L800,240 L880,190 L980,140 L1080,300 L1180,450 L1280,380 L1360,440 L1440,490 L1440,850 L0,850 Z",
-      midShade1: "M980,140 L1080,300 L1180,450 L980,600 Z", // Majestic peak right shade
-      midShade2: "M380,320 L480,410 L580,500 L380,470 Z", // Left-mid peak right shade
-      midShade3: "M800,240 L880,190 L980,140 L800,400 Z", // Center-left peak right shade
-
-      // Foreground range (Layer 3)
-      fore: "M0,680 L110,530 L220,380 L350,500 L480,620 L610,560 L750,500 L880,590 L1020,680 L1140,540 L1250,400 L1345,470 L1440,540 L1440,850 L0,850 Z",
-      foreShade1: "M220,380 L350,500 L480,620 L220,600 Z", // Left fore peak right shade
-      foreShade2: "M1250,400 L1345,470 L1440,540 L1250,650 Z", // Right fore peak right shade
-      foreShade3: "M750,500 L880,590 L1020,680 L750,650 Z", // Center fore peak right shade
+      back: generateTerrain(1440, 280, 310, 1.4, 54321, 80, 440),
+      mid: generateTerrain(1440, 360, 390, 2.0, 98765, 140, 490),
+      fore: generateTerrain(1440, 440, 470, 2.6, 12345, 200, 560),
     }
   }, [])
 
@@ -211,7 +235,7 @@ export default function Hero({ ready }) {
         </svg>
       </div>
 
-      {/* Layer 1: Distant Mountains (Dark Charcoal-Gold + Gold/Ivory Snowcaps) */}
+      {/* Layer 1: Distant Mountains (Realistic Procedural Ridge + Gold/Ivory Snowcaps) */}
       <div className="absolute inset-0 pointer-events-none para-back" style={{ zIndex: 2 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           <defs>
@@ -226,34 +250,24 @@ export default function Hero({ ready }) {
 
           {/* Base */}
           <path d={mountainPaths.back} fill="#1A1715" filter="url(#rockNoise)" />
-          {/* Facets */}
-          <path d="M150,440 L280,360 L280,500 L150,500 Z" fill="#2E2620" opacity="0.7" filter="url(#rockNoise)" />
-          <path d="M750,450 L920,330 L920,500 L750,500 Z" fill="#2E2620" opacity="0.7" filter="url(#rockNoise)" />
-          <path d="M1080,440 L1240,350 L1240,500 L1080,500 Z" fill="#2E2620" opacity="0.7" filter="url(#rockNoise)" />
-          {/* Snowcaps */}
-          <path d={mountainPaths.backSnow1} fill="#E0D5C1" opacity="0.9" />
-          <path d={mountainPaths.backSnow2} fill="#E0D5C1" opacity="0.9" />
-          <path d={mountainPaths.backSnow3} fill="#E0D5C1" opacity="0.9" />
+          
+          {/* Detailed Golden highlight stroke to match sunset rim light */}
+          <path d={mountainPaths.back} fill="none" stroke="#C9A96E" strokeWidth="1" opacity="0.2" />
         </svg>
       </div>
 
-      {/* Layer 2: Midground Mountains (Faceted Dark Charcoal & Warm Bronze/Gold) */}
+      {/* Layer 2: Midground Mountains (Realistic Procedural Cliffs in Dark Charcoal & Bronze) */}
       <div className="absolute inset-0 pointer-events-none para-mid" style={{ zIndex: 3 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
-          {/* Clouds in the sky behind midground */}
+          {/* Horizontal ambient cloud bands */}
           <path d="M100,320 Q200,300 350,320 T600,320" fill="none" stroke="#C9A96E" strokeWidth="20" strokeLinecap="round" opacity="0.08" />
           <path d="M750,280 Q900,260 1050,280 T1350,280" fill="none" stroke="#C9A96E" strokeWidth="35" strokeLinecap="round" opacity="0.08" />
 
           {/* Base */}
           <path d={mountainPaths.mid} fill="#131110" filter="url(#rockNoise)" />
-          {/* Left-side light faces (Warm Gold-Brown Highlights) */}
-          <path d="M200,480 L380,320 L380,550 L200,550 Z" fill="#4E3D2F" filter="url(#rockNoise)" />
-          <path d="M580,500 L800,240 L800,550 L580,550 Z" fill="#4E3D2F" filter="url(#rockNoise)" />
-          <path d="M800,240 L980,140 L980,600 L800,600 Z" fill="#5E4935" filter="url(#rockNoise)" />
-          {/* Right-side shadow faces (Deep Void Black Shadows) */}
-          <path d={mountainPaths.midShade1} fill="#0B0A09" opacity="0.9" filter="url(#rockNoise)" />
-          <path d={mountainPaths.midShade2} fill="#0B0A09" opacity="0.9" filter="url(#rockNoise)" />
-          <path d={mountainPaths.midShade3} fill="#0B0A09" opacity="0.9" filter="url(#rockNoise)" />
+          
+          {/* Detailed Golden highlight stroke */}
+          <path d={mountainPaths.mid} fill="none" stroke="#C9A96E" strokeWidth="1.5" opacity="0.3" />
         </svg>
       </div>
 
@@ -303,16 +317,14 @@ export default function Hero({ ready }) {
         </div>
       </div>
 
-      {/* Layer 3: Foreground Mountains (Deep Void Black & Gold Outlined Ridges) */}
+      {/* Layer 3: Foreground Mountains (Organic Procedural Ridges + Gold Highlight Strokes) */}
       <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 6 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           {/* Base */}
           <path d={mountainPaths.fore} fill="#080808" filter="url(#rockNoise)" />
-          {/* Left light faces */}
-          <path d="M0,680 L110,530 L220,380 L220,700 L0,700 Z" fill="#221B15" filter="url(#rockNoise)" />
-          <path d="M480,620 L750,500 L750,750 L480,750 Z" fill="#221B15" filter="url(#rockNoise)" />
-          {/* Gold highlights on active ridges */}
-          <path d="M0,680 L110,530 L220,380 L350,500 L480,620 L610,560 L750,500 L880,590 L1020,680 L1250,400 L1345,470 L1440,540" fill="none" stroke="#C9A96E" strokeWidth="1.5" opacity="0.4" />
+          
+          {/* Gold highlights on active organic ridges */}
+          <path d={mountainPaths.fore} fill="none" stroke="#C9A96E" strokeWidth="2.0" opacity="0.45" />
         </svg>
       </div>
 
