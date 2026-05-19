@@ -1,13 +1,60 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { gsap } from '../animations/gsap'
 import { splitTextIntoWords } from '../animations/motions'
 import ScrollIndicator from '../components/ScrollIndicator'
+
+function generateTerrain(width, startY, endY, roughness, seed, minH, maxH) {
+  let m_w = seed;
+  let m_z = 987654321;
+  const random = () => {
+    m_w = (36969 * (m_w & 65535) + (m_w >> 16)) & 4294967295;
+    m_z = (18000 * (m_z & 65535) + (m_z >> 16)) & 4294967295;
+    return (((m_w << 16) + m_z) >>> 0) / 4294967296;
+  }
+
+  const segments = 128;
+  const heights = new Array(segments + 1);
+  heights[0] = startY;
+  heights[segments] = endY;
+
+  const displace = (l, r, roughnessVal) => {
+    if (r - l <= 1) return;
+    const mid = Math.floor((l + r) / 2);
+    const avg = (heights[l] + heights[r]) / 2;
+    const offset = (random() - 0.5) * roughnessVal * (r - l) * 0.75;
+    
+    // Apply boundary checks to keep heights realistic and layered
+    heights[mid] = Math.max(minH, Math.min(maxH, avg + offset));
+
+    displace(l, mid, roughnessVal);
+    displace(mid, r, roughnessVal);
+  }
+
+  displace(0, segments, roughness);
+
+  let path = `M0,${heights[0].toFixed(1)}`;
+  for (let i = 1; i <= segments; i++) {
+    const x = (i / segments) * width;
+    path += ` L${x.toFixed(1)},${heights[i].toFixed(1)}`;
+  }
+  path += ` L${width},850 L0,850 Z`;
+  return path;
+}
 
 export default function Hero({ ready }) {
   const sectionRef = useRef(null)
   const headlineRef = useRef(null)
   const metaRef = useRef(null)
   const subtagRef = useRef(null)
+
+  // Generate deterministic realistic mountain ranges
+  const mountainPaths = useMemo(() => {
+    return {
+      back: generateTerrain(1440, 460, 490, 1.4, 54321, 280, 680),
+      mid: generateTerrain(1440, 530, 560, 2.0, 98765, 360, 720),
+      fore: generateTerrain(1440, 610, 640, 2.6, 12345, 460, 760),
+    }
+  }, [])
 
   useEffect(() => {
     if (!ready) return
@@ -149,7 +196,7 @@ export default function Hero({ ready }) {
       <div className="absolute inset-0 pointer-events-none para-back" style={{ zIndex: 2 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           <path
-            d="M0,500 L120,410 L250,470 L380,380 L520,460 L680,330 L820,440 L960,360 L1100,430 L1250,340 L1380,420 L1440,390 L1440,850 L0,850 Z"
+            d={mountainPaths.back}
             fill="#121212"
             stroke="rgba(201, 169, 110, 0.12)"
             strokeWidth="1.5"
@@ -161,7 +208,7 @@ export default function Hero({ ready }) {
       <div className="absolute inset-0 pointer-events-none para-mid" style={{ zIndex: 3 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           <path
-            d="M0,560 L180,460 L320,530 L500,420 L640,510 L780,390 L950,490 L1120,410 L1280,500 L1440,430 L1440,850 L0,850 Z"
+            d={mountainPaths.mid}
             fill="#161616"
             stroke="rgba(201, 169, 110, 0.22)"
             strokeWidth="1.5"
@@ -200,7 +247,7 @@ export default function Hero({ ready }) {
       <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 5 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           <path
-            d="M0,640 L150,560 L350,650 L550,520 L750,620 L980,480 L1200,600 L1350,530 L1440,570 L1440,850 L0,850 Z"
+            d={mountainPaths.fore}
             fill="#080808"
             stroke="rgba(201, 169, 110, 0.55)"
             strokeWidth="2"
