@@ -154,40 +154,56 @@ export default function Hero({ ready }) {
         <div className="w-full h-full grain-animation bg-noise" />
       </div>
 
-      {/* Sky Background Gradient (Warm Sunrise) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FFF2AF] via-[#FCD5BD] to-[#E8C5C8] pointer-events-none" style={{ zIndex: 0 }} />
+      {/* Sky Background Gradient (Dark Charcoal to Burnished Amber/Gold Sunset) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#080808] via-[#1F1A15] to-[#2E251E] pointer-events-none" style={{ zIndex: 0 }} />
 
       {/* Sun / Moon Layer */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none para-sun" style={{ zIndex: 1 }}>
         <svg className="w-[1440px] h-[800px] max-w-full max-h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice">
           <defs>
             <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-              <stop offset="40%" stopColor="#FFECA1" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#FCD5BD" stopOpacity="0" />
+              <stop offset="0%" stopColor="#C9A96E" stopOpacity="0.25" />
+              <stop offset="60%" stopColor="#C9A96E" stopOpacity="0.05" />
+              <stop offset="100%" stopColor="#C9A96E" stopOpacity="0" />
             </radialGradient>
           </defs>
           <circle cx="720" cy="300" r="140" fill="url(#sunGlow)" />
         </svg>
       </div>
 
-      {/* Layer 1: Distant Mountains (Lavender Pink + Snowcaps) */}
+      {/* Layer 1: Distant Mountains (Dark Charcoal-Gold + Gold/Ivory Snowcaps) */}
       <div className="absolute inset-0 pointer-events-none para-back" style={{ zIndex: 2 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
-          <path d={mountainPaths.back} fill="#D0B8C0" />
-          <path d={mountainPaths.backSnow1} fill="#FFFFFF" opacity="0.95" />
-          <path d={mountainPaths.backSnow2} fill="#FFFFFF" opacity="0.95" />
-          <path d={mountainPaths.backSnow3} fill="#FFFFFF" opacity="0.95" />
+          {/* Base */}
+          <path d={mountainPaths.back} fill="#1A1715" />
+          {/* Facets */}
+          <path d="M150,440 L280,360 L280,500 L150,500 Z" fill="#2E2620" opacity="0.7" />
+          <path d="M750,450 L920,330 L920,500 L750,500 Z" fill="#2E2620" opacity="0.7" />
+          <path d="M1080,440 L1240,350 L1240,500 L1080,500 Z" fill="#2E2620" opacity="0.7" />
+          {/* Snowcaps */}
+          <path d={mountainPaths.backSnow1} fill="#E0D5C1" opacity="0.9" />
+          <path d={mountainPaths.backSnow2} fill="#E0D5C1" opacity="0.9" />
+          <path d={mountainPaths.backSnow3} fill="#E0D5C1" opacity="0.9" />
         </svg>
       </div>
 
-      {/* Layer 2: Midground Mountains (Rose/Pink Majestic Cliffs with Shaded Facets) */}
+      {/* Layer 2: Midground Mountains (Faceted Dark Charcoal & Warm Bronze/Gold) */}
       <div className="absolute inset-0 pointer-events-none para-mid" style={{ zIndex: 3 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
-          <path d={mountainPaths.mid} fill="#B56576" />
-          <path d={mountainPaths.midShade1} fill="#8B3D4A" opacity="0.85" />
-          <path d={mountainPaths.midShade2} fill="#8B3D4A" opacity="0.85" />
-          <path d={mountainPaths.midShade3} fill="#8B3D4A" opacity="0.85" />
+          {/* Clouds in the sky behind midground */}
+          <path d="M100,320 Q200,300 350,320 T600,320" fill="none" stroke="#C9A96E" strokeWidth="20" strokeLinecap="round" opacity="0.08" />
+          <path d="M750,280 Q900,260 1050,280 T1350,280" fill="none" stroke="#C9A96E" strokeWidth="35" strokeLinecap="round" opacity="0.08" />
+
+          {/* Base */}
+          <path d={mountainPaths.mid} fill="#131110" />
+          {/* Left-side light faces (Warm Gold-Brown Highlights) */}
+          <path d="M200,480 L380,320 L380,550 L200,550 Z" fill="#4E3D2F" />
+          <path d="M580,500 L800,240 L800,550 L580,550 Z" fill="#4E3D2F" />
+          <path d="M800,240 L980,140 L980,600 L800,600 Z" fill="#5E4935" />
+          {/* Right-side shadow faces (Deep Void Black Shadows) */}
+          <path d={mountainPaths.midShade1} fill="#0B0A09" opacity="0.9" />
+          <path d={mountainPaths.midShade2} fill="#0B0A09" opacity="0.9" />
+          <path d={mountainPaths.midShade3} fill="#0B0A09" opacity="0.9" />
         </svg>
       </div>
 
@@ -197,7 +213,7 @@ export default function Hero({ ready }) {
         style={{ zIndex: 4 }}
       >
         <div ref={subtagRef} className="mb-6" style={{ opacity: 0 }}>
-          <span className="font-sans text-[10px] tracking-[0.5em] text-[#8B3D4A] uppercase drop-shadow-sm font-bold">
+          <span className="font-sans text-[10px] tracking-[0.5em] text-[#C9A96E] uppercase drop-shadow-sm font-bold">
             ArtBro Gallery
           </span>
         </div>
@@ -205,26 +221,29 @@ export default function Hero({ ready }) {
         <h1
           ref={headlineRef}
           className="font-serif font-light text-cream leading-[1.05] tracking-tight will-change-transform max-w-5xl mx-auto"
-          style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)', textShadow: '0 8px 30px rgba(139, 61, 74, 0.4)' }}
+          style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)', textShadow: '0 8px 30px rgba(0, 0, 0, 0.7)' }}
         >
           Connecting Creators & Art Lovers.
         </h1>
 
         <div ref={metaRef} className="mt-12 flex flex-col items-center gap-4" style={{ opacity: 0 }}>
-          <div className="h-12 w-px bg-gradient-to-b from-[#8B3D4A]/50 to-transparent" />
-          <span className="font-sans text-[9px] tracking-[0.3em] text-[#8B3D4A]/70 uppercase font-semibold">
+          <div className="h-12 w-px bg-gradient-to-b from-[#C9A96E]/50 to-transparent" />
+          <span className="font-sans text-[9px] tracking-[0.3em] text-[#C9A96E]/70 uppercase font-semibold">
             Sketches, Portraits & Custom Commissions
           </span>
         </div>
       </div>
 
-      {/* Layer 3: Foreground Mountains (Deep Indigo/Violet Ridges with Shaded Facets) */}
+      {/* Layer 3: Foreground Mountains (Deep Void Black & Gold Outlined Ridges) */}
       <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 5 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
-          <path d={mountainPaths.fore} fill="#26294A" />
-          <path d={mountainPaths.foreShade1} fill="#181A33" opacity="0.9" />
-          <path d={mountainPaths.foreShade2} fill="#181A33" opacity="0.9" />
-          <path d={mountainPaths.foreShade3} fill="#181A33" opacity="0.9" />
+          {/* Base */}
+          <path d={mountainPaths.fore} fill="#080808" />
+          {/* Left light faces */}
+          <path d="M0,680 L220,380 L220,700 L0,700 Z" fill="#221B15" />
+          <path d="M480,620 L750,500 L750,750 L480,750 Z" fill="#221B15" />
+          {/* Gold highlights on active ridges */}
+          <path d="M0,680 L220,380 L480,620 L750,500 L1020,680 L1250,400 L1440,540" fill="none" stroke="#C9A96E" strokeWidth="1.5" opacity="0.4" />
         </svg>
       </div>
 
