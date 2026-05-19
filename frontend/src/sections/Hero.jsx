@@ -41,18 +41,62 @@ function generateTerrain(width, startY, endY, roughness, seed, minH, maxH) {
   return path;
 }
 
+function generateForest(width, floorY, density, avgHeight, seed) {
+  let m_w = seed;
+  let m_z = 987654321;
+  const random = () => {
+    m_w = (36969 * (m_w & 65535) + (m_w >> 16)) & 4294967295;
+    m_z = (18000 * (m_z & 65535) + (m_z >> 16)) & 4294967295;
+    return (((m_w << 16) + m_z) >>> 0) / 4294967296;
+  }
+
+  let path = `M0,850 L0,${floorY}`;
+  const step = width / density;
+  
+  for (let i = 0; i <= density; i++) {
+    const x = i * step;
+    const h = avgHeight * (0.75 + random() * 0.5); // height variance
+    const w = h * 0.35; // base width proportional to height
+    
+    const yBase = floorY;
+    const yMid = floorY - h * 0.4;
+    const yMidNotch = floorY - h * 0.45;
+    const yTop = floorY - h * 0.7;
+    const yTopNotch = floorY - h * 0.75;
+    const yPeak = floorY - h;
+
+    // Draw multi-tiered pine tree outline
+    path += ` L${(x - w * 0.5).toFixed(1)},${yBase.toFixed(1)}`;
+    path += ` L${(x - w * 0.35).toFixed(1)},${yMid.toFixed(1)}`;
+    path += ` L${(x - w * 0.2).toFixed(1)},${yMidNotch.toFixed(1)}`;
+    path += ` L${(x - w * 0.2).toFixed(1)},${yTop.toFixed(1)}`;
+    path += ` L${(x - w * 0.08).toFixed(1)},${yTopNotch.toFixed(1)}`;
+    path += ` L${x.toFixed(1)},${yPeak.toFixed(1)}`;
+    path += ` L${(x + w * 0.08).toFixed(1)},${yTopNotch.toFixed(1)}`;
+    path += ` L${(x + w * 0.2).toFixed(1)},${yTop.toFixed(1)}`;
+    path += ` L${(x + w * 0.2).toFixed(1)},${yMidNotch.toFixed(1)}`;
+    path += ` L${(x + w * 0.35).toFixed(1)},${yMid.toFixed(1)}`;
+    path += ` L${(x + w * 0.5).toFixed(1)},${yBase.toFixed(1)}`;
+  }
+
+  path += ` L${width},850 Z`;
+  return path;
+}
+
 export default function Hero({ ready }) {
   const sectionRef = useRef(null)
   const headlineRef = useRef(null)
   const metaRef = useRef(null)
   const subtagRef = useRef(null)
 
-  // Generate deterministic realistic mountain ranges
+  // Generate deterministic realistic tall mountain and pine forest ranges
   const mountainPaths = useMemo(() => {
     return {
-      back: generateTerrain(1440, 460, 490, 1.4, 54321, 280, 680),
-      mid: generateTerrain(1440, 530, 560, 2.0, 98765, 360, 720),
-      fore: generateTerrain(1440, 610, 640, 2.6, 12345, 460, 760),
+      back: generateTerrain(1440, 240, 270, 1.6, 54321, 60, 420),
+      mid: generateTerrain(1440, 320, 350, 2.1, 98765, 120, 460),
+      forestMid: generateForest(1440, 560, 45, 65, 77777),
+      fore: generateTerrain(1440, 420, 450, 2.6, 12345, 200, 540),
+      forestFore: generateForest(1440, 660, 30, 100, 88888),
     }
   }, [])
 
@@ -69,15 +113,15 @@ export default function Hero({ ready }) {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ delay: 0.1 })
 
-      // Majestic entry for mountains and glowing sun
+      // Majestic entry for mountains, forests, and glowing sun
       tl.fromTo('.para-sun',
         { scale: 0.9, opacity: 0 },
         { scale: 1, opacity: 1, duration: 2.2, ease: 'power3.out' }
       )
 
-      tl.fromTo(['.para-back', '.para-mid', '.para-fore'],
-        { y: 120, opacity: 0 },
-        { y: 0, opacity: 1, duration: 2.5, ease: 'power4.out', stagger: 0.15 },
+      tl.fromTo(['.para-back', '.para-mid', '.para-forest-mid', '.para-fore', '.para-forest-fore'],
+        { y: 150, opacity: 0 },
+        { y: 0, opacity: 1, duration: 2.5, ease: 'power4.out', stagger: 0.12 },
         '-=1.8'
       )
 
@@ -120,12 +164,14 @@ export default function Hero({ ready }) {
       })
 
       scrollTl.to('.para-sun', { yPercent: 12, ease: 'none' }, 0)
-      scrollTl.to('.para-back', { yPercent: 24, ease: 'none' }, 0)
-      scrollTl.to('.para-mid', { yPercent: 36, ease: 'none' }, 0)
-      scrollTl.to(headline, { yPercent: -15, opacity: 0.15, ease: 'none' }, 0)
-      scrollTl.to(subtagRef.current, { yPercent: -15, opacity: 0, ease: 'none' }, 0)
-      scrollTl.to(metaRef.current, { yPercent: -15, opacity: 0, ease: 'none' }, 0)
-      scrollTl.to('.para-fore', { yPercent: 48, ease: 'none' }, 0)
+      scrollTl.to('.para-back', { yPercent: 22, ease: 'none' }, 0)
+      scrollTl.to('.para-mid', { yPercent: 32, ease: 'none' }, 0)
+      scrollTl.to('.para-forest-mid', { yPercent: 38, ease: 'none' }, 0)
+      scrollTl.to(headline, { yPercent: -12, opacity: 0.15, ease: 'none' }, 0)
+      scrollTl.to(subtagRef.current, { yPercent: -12, opacity: 0, ease: 'none' }, 0)
+      scrollTl.to(metaRef.current, { yPercent: -12, opacity: 0, ease: 'none' }, 0)
+      scrollTl.to('.para-fore', { yPercent: 44, ease: 'none' }, 0)
+      scrollTl.to('.para-forest-fore', { yPercent: 50, ease: 'none' }, 0)
 
     }, section)
 
@@ -135,17 +181,23 @@ export default function Hero({ ready }) {
       const mouseX = (clientX / window.innerWidth) - 0.5
       const mouseY = (clientY / window.innerHeight) - 0.5
 
-      gsap.to('.para-sun', { x: mouseX * 15, y: mouseY * 10, duration: 1.5, ease: 'power2.out' })
-      gsap.to('.para-back', { x: mouseX * 28, y: mouseY * 15, duration: 1.5, ease: 'power2.out' })
-      gsap.to('.para-mid', { x: mouseX * 45, y: mouseY * 25, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-sun', { x: mouseX * 12, y: mouseY * 8, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-back', { x: mouseX * 24, y: mouseY * 12, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-mid', { x: mouseX * 36, y: mouseY * 18, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-forest-mid', { x: mouseX * 42, y: mouseY * 22, duration: 1.5, ease: 'power2.out' })
       gsap.to(headline, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
       gsap.to(subtagRef.current, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
       gsap.to(metaRef.current, { x: mouseX * -25, y: mouseY * -15, duration: 1.5, ease: 'power2.out' })
-      gsap.to('.para-fore', { x: mouseX * 65, y: mouseY * 35, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-fore', { x: mouseX * 52, y: mouseY * 28, duration: 1.5, ease: 'power2.out' })
+      gsap.to('.para-forest-fore', { x: mouseX * 62, y: mouseY * 32, duration: 1.5, ease: 'power2.out' })
     }
 
     const handleMouseLeave = () => {
-      gsap.to(['.para-sun', '.para-back', '.para-mid', headline, subtagRef.current, metaRef.current, '.para-fore'], {
+      gsap.to([
+        '.para-sun', '.para-back', '.para-mid', '.para-forest-mid', 
+        headline, subtagRef.current, metaRef.current, 
+        '.para-fore', '.para-forest-fore'
+      ], {
         x: 0,
         y: 0,
         duration: 2,
@@ -170,7 +222,7 @@ export default function Hero({ ready }) {
       className="relative w-full h-screen overflow-hidden bg-void pencil-texture select-none"
     >
       {/* Heavy grain overlay */}
-      <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ zIndex: 7 }}>
+      <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ zIndex: 9 }}>
         <div className="w-full h-full grain-animation bg-noise" />
       </div>
 
@@ -187,8 +239,8 @@ export default function Hero({ ready }) {
               <stop offset="100%" stopColor="#C9A96E" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <circle cx="720" cy="270" r="150" fill="url(#sunGlow)" />
-          <circle cx="720" cy="270" r="65" fill="#C9A96E" opacity="0.12" />
+          <circle cx="720" cy="240" r="150" fill="url(#sunGlow)" />
+          <circle cx="720" cy="240" r="65" fill="#C9A96E" opacity="0.12" />
         </svg>
       </div>
 
@@ -210,16 +262,28 @@ export default function Hero({ ready }) {
           <path
             d={mountainPaths.mid}
             fill="#161616"
-            stroke="rgba(201, 169, 110, 0.22)"
+            stroke="rgba(201, 169, 110, 0.2)"
             strokeWidth="1.5"
           />
         </svg>
       </div>
 
-      {/* ── Main Headline (Sandwiched between Layer 2 and Layer 3) ── */}
+      {/* Layer 2b: Midground Pine Forest */}
+      <div className="absolute inset-0 pointer-events-none para-forest-mid" style={{ zIndex: 4 }}>
+        <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
+          <path
+            d={mountainPaths.forestMid}
+            fill="#1b1b1b"
+            stroke="rgba(201, 169, 110, 0.12)"
+            strokeWidth="1"
+          />
+        </svg>
+      </div>
+
+      {/* ── Main Headline (Sandwiched between Midground Forest and Foreground Mountains) ── */}
       <div
         className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pointer-events-none"
-        style={{ zIndex: 4 }}
+        style={{ zIndex: 5 }}
       >
         <div ref={subtagRef} className="mb-6" style={{ opacity: 0 }}>
           <span className="font-sans text-[10px] tracking-[0.5em] text-gold uppercase drop-shadow-sm">
@@ -244,19 +308,31 @@ export default function Hero({ ready }) {
       </div>
 
       {/* Layer 3: Foreground Mountains */}
-      <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 5 }}>
+      <div className="absolute inset-0 pointer-events-none para-fore" style={{ zIndex: 6 }}>
         <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
           <path
             d={mountainPaths.fore}
-            fill="#080808"
-            stroke="rgba(201, 169, 110, 0.55)"
-            strokeWidth="2"
+            fill="#0b0b0b"
+            stroke="rgba(201, 169, 110, 0.4)"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </div>
+
+      {/* Layer 3b: Foreground Pine Forest */}
+      <div className="absolute inset-0 pointer-events-none para-forest-fore" style={{ zIndex: 7 }}>
+        <svg className="w-full h-full" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMax slice">
+          <path
+            d={mountainPaths.forestFore}
+            fill="#050505"
+            stroke="rgba(201, 169, 110, 0.5)"
+            strokeWidth="1.5"
           />
         </svg>
       </div>
 
       {/* Bottom Fade Gradient to void */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-void via-void/90 to-transparent pointer-events-none" style={{ zIndex: 6 }} />
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-void via-void/90 to-transparent pointer-events-none" style={{ zIndex: 8 }} />
 
       {/* Scroll indicator */}
       <ScrollIndicator />
