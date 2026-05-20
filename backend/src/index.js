@@ -97,16 +97,16 @@ async function runStartupDiagnostics() {
       }
     }
 
-    // 3. Validate User Avatars
+    // 3. Validate User Profile Images
     const users = await prisma.user.findMany({
-      select: { name: true, email: true, avatar: true }
+      select: { name: true, email: true, profileImage: true }
     });
     for (const user of users) {
-      if (user.avatar && !user.avatar.startsWith('http')) {
-        const relativePath = user.avatar.startsWith('/') ? user.avatar.substring(1) : user.avatar;
+      if (user.profileImage && !user.profileImage.startsWith('http')) {
+        const relativePath = user.profileImage.startsWith('/') ? user.profileImage.substring(1) : user.profileImage;
         const fullPath = path.join(__dirname, '..', relativePath);
         if (!fs.existsSync(fullPath)) {
-          console.warn(`⚠️ Warning: Missing avatar image for user "${user.name}" (${user.email}) at expected path: ${fullPath}`);
+          console.warn(`⚠️ Warning: Missing profile image for user "${user.name}" (${user.email}) at expected path: ${fullPath}`);
         }
       }
     }

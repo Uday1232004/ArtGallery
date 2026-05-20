@@ -1,14 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useCartStore } from '../store/cartStore';
 import api, { normalizeImageUrl } from '../lib/axios';
-import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag } from 'lucide-react';
+import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag, Camera, Save } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { canvasPreview } from '../utils/canvasPreview';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
 import { gsap } from '../animations/gsap';
 import { useToastStore } from '../store/toastStore';
+
+function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
+  return centerCrop(
+    makeAspectCrop({ unit: '%', width: 90 }, aspect, mediaWidth, mediaHeight),
+    mediaWidth,
+    mediaHeight,
+  );
+}
 
 export default function UserProfile() {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -22,6 +34,20 @@ export default function UserProfile() {
   const [commissions, setCommissions] = useState([]);
   const [isLoadingCommissions, setIsLoadingCommissions] = useState(false);
   const [addingToCartId, setAddingToCartId] = useState(null);
+
+  // Settings / profile edit state
+  const [settingsName, setSettingsName] = useState('');
+  const [settingsPhone, setSettingsPhone] = useState('');
+  const [settingsAddress, setSettingsAddress] = useState('');
+  const [settingsFile, setSettingsFile] = useState(null);
+  const [settingsPreview, setSettingsPreview] = useState('');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState('');
+  const [cropOpen, setCropOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState('');
+  const imgRef = useRef(null);
+  const [crop, setCrop] = useState();
+  const [completedCrop, setCompletedCrop] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -83,8 +109,84 @@ export default function UserProfile() {
     }
   };
 
-  const handleAddToCart = async (commission) => {
-    if (!commission.artworkId) return;
+  // Populate settings form when user data is available
+  useEffect(() => {
+    if (user) {
+      setSettingsName(user.name || '');
+      setSettingsPhone(user.phone || '');
+      setSettingsAddress(user.address || '');
+      setSettingsPreview(user.profileImage || '');
+    }
+  }, [user]);
+
+  const onDropSettings = useCallback((acceptedFiles) => {
+    if (acceptedFiles && acceptedFiles.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImgSrc(reader.result?.toString() || '');
+        setCropOpen(true);
+      });
+      reader.readAsDataURL(acceptedFiles[0]);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onDropSettings,
+    accept: { 'image/*': [] },
+    multiple: false,
+  });
+
+  function onImageLoad(e) {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 1));
+  }
+
+  const handleSaveCrop = async () => {
+    if (completedCrop?.width && completedCrop?.height && imgRef.current) {
+      const canvas = document.createElement('canvas');
+      try {
+        const blob = await canvasPreview(imgRef.current, canvas, completedCrop);
+        const croppedFile = new File([blob], 'profile-image.jpg', { type: 'image/jpeg' });
+        setSettingsFile(croppedFile);
+        setSettingsPreview(URL.createObjectURL(croppedFile));
+        setCropOpen(false);
+      } catch {
+        setSettingsMsg('Failed to crop image.');
+      }
+    }
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsMsg('');
+    try {
+      const formData = new FormData();
+      formData.append('name', settingsName);
+      formData.append('phone', settingsPhone);
+      formData.append('address', settingsAddress);
+      if (settingsFile) {
+        formData.append('profileImage', settingsFile);
+      }
+      const { data } = await api.put('/auth/profile', formData);
+      // Update the global auth store so Navbar reflects the new picture immediately
+      useAuthStore.getState().updateUser({
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        profileImage: data.profileImage,
+      });
+      setSettingsPreview(data.profileImage || '');
+      setSettingsFile(null);
+      setSettingsMsg('✓ Profile saved successfully.');
+    } catch (err) {
+      setSettingsMsg(err.response?.data?.message || 'Failed to save profile.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleAddToCart = async (commission) => {    if (!commission.artworkId) return;
     setAddingToCartId(commission.id);
     try {
       await addItem(commission.artworkId, 1);
@@ -361,23 +463,122 @@ export default function UserProfile() {
               {activeTab === 'settings' && (
                 <div className="max-w-md">
                   <h2 className="font-serif text-2xl text-cream mb-8">Account Settings</h2>
-                  
-                  <div className="space-y-6">
+
+                  {/* Crop overlay */}
+                  {cropOpen && (
+                    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-6">
+                      <h3 className="font-serif text-xl text-cream mb-4">Crop Profile Photo</h3>
+                      <div className="flex items-center justify-center bg-black/50 rounded-lg border border-white/10 mb-6 max-h-[60vh] overflow-auto">
+                        {imgSrc && (
+                          <ReactCrop
+                            crop={crop}
+                            onChange={(_, pct) => setCrop(pct)}
+                            onComplete={(c) => setCompletedCrop(c)}
+                            aspect={1}
+                            circularCrop
+                          >
+                            <img
+                              ref={imgRef}
+                              alt="Crop"
+                              src={imgSrc}
+                              onLoad={onImageLoad}
+                              className="max-h-[50vh] object-contain"
+                            />
+                          </ReactCrop>
+                        )}
+                      </div>
+                      <div className="flex gap-4">
+                        <button onClick={() => setCropOpen(false)} className="px-6 py-2.5 text-xs font-bold text-mist hover:text-cream border border-white/10 rounded-lg">Cancel</button>
+                        <button onClick={handleSaveCrop} className="px-6 py-2.5 text-xs font-bold bg-gold text-void rounded-lg hover:bg-ivory">Save Crop</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveSettings} className="space-y-6">
+                    {/* Profile picture */}
+                    <div className="flex items-center gap-6">
+                      <div
+                        {...getRootProps()}
+                        className={`relative group w-20 h-20 rounded-full overflow-hidden border-2 border-dashed cursor-pointer flex-shrink-0 transition-colors ${
+                          isDragActive ? 'border-gold bg-gold/5' : 'border-white/20 hover:border-white/50'
+                        }`}
+                      >
+                        <input {...getInputProps()} />
+                        {settingsPreview ? (
+                          <img
+                            src={settingsPreview.startsWith('blob:') ? settingsPreview : normalizeImageUrl(settingsPreview)}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center font-serif text-2xl text-mist/30 bg-zinc-900">
+                            {settingsName?.charAt(0) || '?'}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                          <Camera size={18} className="text-cream" />
+                          <span className="text-[9px] text-cream uppercase tracking-wider mt-1">Change</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-sans text-xs text-mist mb-1">Profile Photo</p>
+                        <p className="font-sans text-[10px] text-mist/50">Click or drag to upload. Max 5MB.</p>
+                        {settingsPreview && (
+                          <button type="button" onClick={() => { setSettingsPreview(''); setSettingsFile(null); }} className="text-[10px] text-red-400 hover:text-red-300 mt-1 font-sans">Remove photo</button>
+                        )}
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Name</label>
-                      <input type="text" disabled value={user.name} className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory/50 cursor-not-allowed" />
+                      <input
+                        type="text"
+                        value={settingsName}
+                        onChange={(e) => setSettingsName(e.target.value)}
+                        className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory outline-none focus:border-white/30 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Phone</label>
+                      <input
+                        type="tel"
+                        value={settingsPhone}
+                        onChange={(e) => setSettingsPhone(e.target.value)}
+                        className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory outline-none focus:border-white/30 transition-colors"
+                        placeholder="+91 XXXXX XXXXX"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Address</label>
+                      <textarea
+                        value={settingsAddress}
+                        onChange={(e) => setSettingsAddress(e.target.value)}
+                        rows={3}
+                        className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory outline-none focus:border-white/30 transition-colors resize-none"
+                        placeholder="Your shipping address"
+                      />
                     </div>
                     <div>
                       <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Email</label>
-                      <input type="email" disabled value={user.email} className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory/50 cursor-not-allowed" />
+                      <input type="email" disabled value={user.email} className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory/40 cursor-not-allowed" />
+                      <p className="font-sans text-[10px] text-mist/40 mt-1">Email cannot be changed.</p>
                     </div>
-                    <div className="pt-4">
-                      <p className="font-sans text-xs text-mist/70 mb-4">To update your account details, please contact gallery support.</p>
-                      <button className="border border-white/10 text-mist hover:text-gold hover:border-gold transition-colors font-sans text-xs uppercase tracking-widest px-6 py-3">
-                        Contact Support
-                      </button>
-                    </div>
-                  </div>
+
+                    {settingsMsg && (
+                      <p className={`font-sans text-xs ${settingsMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
+                        {settingsMsg}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={settingsSaving}
+                      className="flex items-center gap-2 bg-gold text-void font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 hover:bg-ivory transition-colors disabled:opacity-50"
+                    >
+                      <Save size={14} />
+                      {settingsSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </form>
                 </div>
               )}
 

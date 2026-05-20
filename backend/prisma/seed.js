@@ -6,7 +6,7 @@ const { copySeedAssetSafely } = require('../src/utils/assetHelper');
 async function main() {
   console.log('Start seeding...');
 
-  // Clean up existing data
+  // Clean up existing data (preserve users so Google-linked accounts survive)
   await prisma.cartItem.deleteMany();
   await prisma.wishlistItem.deleteMany();
   await prisma.orderItem.deleteMany();
@@ -17,57 +17,66 @@ async function main() {
   await prisma.exhibitionArtwork.deleteMany();
   await prisma.exhibition.deleteMany();
   await prisma.artwork.deleteMany();
-  await prisma.artist.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.highlight.deleteMany();
 
-  // 1. Create Super Admin User
+  // Remove all artists so we can recreate cleanly
+  // First unlink users from artists
+  await prisma.user.updateMany({ data: { artistId: null } });
+  await prisma.artist.deleteMany();
+
+  // ─── 1. Ensure the main admin/artist account exists ───────────────────────
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash('admin123', salt);
 
-  const admin = await prisma.user.create({
-    data: {
-      email: 'udaychandrabindhani@gmail.com',
-      passwordHash,
-      name: 'Uday Chandra (Admin)',
-      role: 'SUPER_ADMIN',
-    },
+  let adminUser = await prisma.user.findUnique({
+    where: { email: 'udaychandrabindhani@gmail.com' }
   });
-  console.log(`Created admin user: ${admin.email}`);
 
-  // Copy seed asset for the artist profile image
+  if (!adminUser) {
+    adminUser = await prisma.user.create({
+      data: {
+        email: 'udaychandrabindhani@gmail.com',
+        passwordHash,
+        name: 'Uday Chandra',
+        role: 'SUPER_ADMIN',
+        authProvider: 'local',
+      },
+    });
+    console.log(`Created admin user: ${adminUser.email}`);
+  } else {
+    // Keep existing Google auth but ensure role is correct
+    adminUser = await prisma.user.update({
+      where: { email: 'udaychandrabindhani@gmail.com' },
+      data: { name: 'Uday Chandra', role: 'SUPER_ADMIN' }
+    });
+    console.log(`Using existing admin user: ${adminUser.email}`);
+  }
+
+  // ─── 2. Create the single Artist Profile linked to the admin account ──────
   const profileImagePath = copySeedAssetSafely('sketch_1.jpeg', 'profiles');
 
-  // 2. Create the main Artist Profile
   const artist = await prisma.artist.create({
     data: {
       name: 'Uday Chandra',
       bio: 'Engineering student and self-taught artist exploring the intersection of emotion, logic, and visual storytelling.',
       specialization: 'Pencil realistic portraits, Pen art, Krishna artworks',
       experience: 'Self-taught, 10+ years sketching',
-      profileImage: profileImagePath,
+      profileImage: adminUser.profileImage || profileImagePath,
       socialLinks: {
         instagram: 'https://instagram.com/_art__bro_/',
         behance: 'https://behance.net/udaychandra'
       }
     }
   });
-  console.log(`Created artist: ${artist.name}`);
 
-  // Create Artist User
-  const artistPasswordHash = await bcrypt.hash('password123', salt);
-  const artistUser = await prisma.user.create({
-    data: {
-      email: 'artist@artbro.com',
-      passwordHash: artistPasswordHash,
-      name: 'Uday Chandra',
-      role: 'ARTIST',
-      artistId: artist.id,
-      avatar: profileImagePath,
-    },
+  // Link artist to the admin user
+  await prisma.user.update({
+    where: { id: adminUser.id },
+    data: { artistId: artist.id }
   });
-  console.log(`Created artist user: ${artistUser.email}`);
+  console.log(`Created and linked artist profile: ${artist.name}`);
 
-  // 3. Create All 12 Public Artworks with copied seed images
+  // ─── 3. Create All 12 Artworks ────────────────────────────────────────────
   const artworksData = [
     {
       title: 'The Gaze',
@@ -86,7 +95,7 @@ async function main() {
     },
     {
       title: 'Divine Flute',
-      description: 'Capturing the celestial and serene presence of Krishna. High-contrast charcoal creates deep, velvety shadows, while delicate details represent the divine light radiating from within. An atmospheric, emotional masterpiece designed to bring peace and deep spirituality.',
+      description: 'Capturing the celestial and serene presence of Krishna. High-contrast charcoal creates deep, velvety shadows, while delicate details represent the divine light radiating from within.',
       category: 'KRISHNA_ART',
       medium: 'Charcoal on Paper',
       price: 1200,
@@ -101,7 +110,7 @@ async function main() {
     },
     {
       title: 'Fractured',
-      description: 'A visual translation of the analytical engineering brain colliding with the chaotic flow of pure expression. Combining ink washes, scrapings, and fine pencil lines, "Fractured" represents the moment logic breaks down and reveals the raw emotion underneath.',
+      description: 'A visual translation of the analytical engineering brain colliding with the chaotic flow of pure expression. Combining ink washes, scrapings, and fine pencil lines.',
       category: 'EXPERIMENTAL',
       medium: 'Mixed Media',
       price: 600,
@@ -116,7 +125,7 @@ async function main() {
     },
     {
       title: 'Old Soul',
-      description: 'A tribute to the layers of history, wisdom, and life stories written in the lines of an elderly face. This hyper-realistic drawing pushes the boundaries of texture replication using charcoal, graphite, and blending stumps to breathe authentic life into paper.',
+      description: 'A tribute to the layers of history, wisdom, and life stories written in the lines of an elderly face. This hyper-realistic drawing pushes the boundaries of texture replication.',
       category: 'PORTRAIT',
       medium: 'Pencil Sketch',
       price: 750,
@@ -131,7 +140,7 @@ async function main() {
     },
     {
       title: 'Ink Flow I',
-      description: 'An intricate map of geometric flows and fine detailing. Created entirely with a 0.05mm technical drawing pen, this piece captures the natural patterns found in tree rings, river currents, and neural maps, demonstrating meticulous precision.',
+      description: 'An intricate map of geometric flows and fine detailing. Created entirely with a 0.05mm technical drawing pen.',
       category: 'PEN_ART',
       medium: 'Fineliner',
       price: 450,
@@ -146,7 +155,7 @@ async function main() {
     },
     {
       title: 'Radha Krishna',
-      description: 'A representation of eternal love and spiritual connection. Drawn with a rich spectrum of graphite grades from 2H to 10B to construct extreme contrast and deep dimensionality. Captures a calm, serene moment of companionship between Radha and Krishna.',
+      description: 'A representation of eternal love and spiritual connection. Drawn with a rich spectrum of graphite grades from 2H to 10B.',
       category: 'KRISHNA_ART',
       medium: 'Graphite',
       price: 1500,
@@ -161,7 +170,7 @@ async function main() {
     },
     {
       title: 'Micro Details',
-      description: 'Pushing the limits of fine-line pen work. Exploring micro-textures and shading through cross-hatching and stippling techniques. A highly organic study reflecting thousands of individual pen strokes.',
+      description: 'Pushing the limits of fine-line pen work. Exploring micro-textures and shading through cross-hatching and stippling techniques.',
       category: 'PEN_ART',
       medium: 'Micron Pen',
       price: 550,
@@ -176,7 +185,7 @@ async function main() {
     },
     {
       title: 'Emotion State',
-      description: 'Capturing abstract sorrow and inner beauty. Applying dynamic charcoal washes on wet heavy-duty art paper to generate fluid, smoky edges that mimic the atmospheric cinematography of classic emotional films.',
+      description: 'Capturing abstract sorrow and inner beauty. Applying dynamic charcoal washes on wet heavy-duty art paper.',
       category: 'EXPERIMENTAL',
       medium: 'Charcoal Wash',
       price: 950,
@@ -191,7 +200,7 @@ async function main() {
     },
     {
       title: 'Brother',
-      description: 'A study of boyhood, trust, and growing up. Drawn from life, focusing on realistic hair textures and soft shadow values to invoke nostalgia and close emotional warmth.',
+      description: 'A study of boyhood, trust, and growing up. Drawn from life, focusing on realistic hair textures and soft shadow values.',
       category: 'PORTRAIT',
       medium: 'Pencil',
       price: 800,
@@ -256,7 +265,7 @@ async function main() {
     console.log(`Created artwork: ${artwork.title}`);
   }
 
-  // 4. Create an Exhibition with copied seed image
+  // ─── 4. Create Exhibition ─────────────────────────────────────────────────
   const exhibitionBannerPath = copySeedAssetSafely('sketch_3.jpeg', 'exhibitions');
 
   const exhibition = await prisma.exhibition.create({
@@ -270,20 +279,16 @@ async function main() {
       bannerImage: exhibitionBannerPath
     }
   });
-  
-  // Link artworks to exhibition
+
   const allArtworks = await prisma.artwork.findMany();
   for (const aw of allArtworks) {
     await prisma.exhibitionArtwork.create({
-      data: {
-        exhibitionId: exhibition.id,
-        artworkId: aw.id
-      }
+      data: { exhibitionId: exhibition.id, artworkId: aw.id }
     });
   }
   console.log(`Created exhibition: ${exhibition.name}`);
 
-  // 5. Create a Sample Commission Request
+  // ─── 5. Sample Commission ─────────────────────────────────────────────────
   await prisma.commission.create({
     data: {
       clientName: 'Sarah Jenkins',
@@ -301,9 +306,12 @@ async function main() {
       artistId: artist.id
     }
   });
-  console.log(`Created sample commission request`);
+  console.log('Created sample commission request');
 
-  console.log('Seeding finished.');
+  console.log('\n✅ Seeding finished.');
+  console.log(`   Account : udaychandrabindhani@gmail.com`);
+  console.log(`   Role    : SUPER_ADMIN`);
+  console.log(`   Artworks: ${allArtworks.length}`);
 }
 
 main()

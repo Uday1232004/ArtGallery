@@ -9,10 +9,6 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('USER');
-  const [specialization, setSpecialization] = useState('');
-  const [experience, setExperience] = useState('');
-  const [bio, setBio] = useState('');
-  const [profileImage, setProfileImage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -33,14 +29,7 @@ export default function Signup() {
     setError('');
 
     try {
-      const payload = {
-        name,
-        email,
-        password,
-        role,
-        ...(role === 'ARTIST' && { specialization, experience, bio, profileImage })
-      };
-      
+      const payload = { name, email, password, role };
       const response = await api.post('/auth/register', payload);
       login(response.data, response.data.token);
       navigate(role === 'ARTIST' ? '/admin' : '/profile');
@@ -80,6 +69,7 @@ export default function Signup() {
               </div>
             )}
             
+            {/* Role toggle */}
             <div className="flex border border-white/10 p-1 bg-void/50 rounded-sm">
               <button
                 type="button"
@@ -94,12 +84,18 @@ export default function Signup() {
                 type="button"
                 onClick={() => setRole('ARTIST')}
                 className={`flex-1 py-2 text-center font-sans text-[10px] tracking-widest uppercase transition-all duration-300 ${
-                  role === 'ARTIST' ? 'bg-ivory text-void font-semibold' : 'text-mist hover:text-ivory'
+                  role === 'ARTIST' ? 'bg-gold text-void font-semibold' : 'text-mist hover:text-ivory'
                 }`}
               >
                 Join as Artist
               </button>
             </div>
+
+            {role === 'ARTIST' && (
+              <p className="font-sans text-[10px] text-gold/70 text-center leading-relaxed">
+                You'll get your own artist profile to post artworks and manage your portfolio.
+              </p>
+            )}
             
             <div className="group">
               <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Full Name</label>
@@ -109,7 +105,7 @@ export default function Signup() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
-                placeholder="John Doe"
+                placeholder="Your name"
               />
             </div>
 
@@ -138,67 +134,18 @@ export default function Signup() {
               />
             </div>
 
-            {role === 'ARTIST' && (
-              <>
-                <div className="group">
-                  <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Specialization</label>
-                  <input
-                    type="text"
-                    value={specialization}
-                    onChange={(e) => setSpecialization(e.target.value)}
-                    required
-                    className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
-                    placeholder="Pencil Realistic Portraits, Charcoal Art"
-                  />
-                </div>
-
-                <div className="group">
-                  <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Experience</label>
-                  <input
-                    type="text"
-                    value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                    required
-                    className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
-                    placeholder="Self-taught, 5+ years"
-                  />
-                </div>
-
-                <div className="group">
-                  <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Creative Bio</label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    required
-                    rows={3}
-                    className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400 resize-none"
-                    placeholder="Share your story and aesthetic vision..."
-                  />
-                </div>
-
-                <div className="group">
-                  <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Profile Image URL</label>
-                  <input
-                    type="text"
-                    value={profileImage}
-                    onChange={(e) => setProfileImage(e.target.value)}
-                    className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
-                    placeholder="https://example.com/avatar.jpg (Optional)"
-                  />
-                </div>
-              </>
-            )}
-
             <button
               type="submit"
               disabled={isLoading}
               data-cursor-hover
-              className="mt-4 font-sans text-xs tracking-[0.3em] text-void uppercase bg-ivory px-10 py-4 hover:bg-gold hover:text-void transition-all duration-400 flex justify-center items-center h-[50px]"
+              className={`mt-4 font-sans text-xs tracking-[0.3em] text-void uppercase px-10 py-4 transition-all duration-400 flex justify-center items-center h-[50px] ${
+                role === 'ARTIST' ? 'bg-gold hover:bg-cream' : 'bg-ivory hover:bg-gold'
+              }`}
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-void/30 border-t-void rounded-full animate-spin" />
               ) : (
-                'Create Account'
+                role === 'ARTIST' ? 'Create Artist Account' : 'Create Account'
               )}
             </button>
           </form>

@@ -36,9 +36,9 @@ const register = async (req, res) => {
       createdArtist = await prisma.artist.create({
         data: {
           name,
-          bio: bio || 'Resident sketch artist and visual storyteller exploring depth and light.',
-          specialization: specialization || 'Pencil Realism & Sketches',
-          experience: experience || 'Self-taught artist',
+          bio: '',
+          specialization: '',
+          experience: '',
           socialLinks: { instagram: '', behance: '' }
         }
       });
@@ -50,7 +50,7 @@ const register = async (req, res) => {
         email,
         passwordHash,
         role: finalRole,
-        profileImage: profileImage || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
+        profileImage: profileImage || null,
         artistId: createdArtist ? createdArtist.id : null
       },
     });
@@ -68,20 +68,21 @@ const register = async (req, res) => {
   }
 };
 
-// Helper to automatically ensure that admins, managers, and artists have a linked Artist profile
+// Helper to automatically ensure that SUPER_ADMIN accounts have a linked Artist profile
+// Regular ARTIST accounts get their profile created at registration time
 const ensureArtistProfile = async (user) => {
-  if ((user.role === 'SUPER_ADMIN' || user.role === 'MANAGER' || user.role === 'ARTIST') && !user.artistId) {
+  if (user.role === 'SUPER_ADMIN' && !user.artistId) {
     const createdArtist = await prisma.artist.create({
       data: {
         name: user.name,
-        bio: 'Artist bio is empty. Please edit profile to customize.',
-        specialization: user.role === 'SUPER_ADMIN' ? 'Gallery Director' : 'Fine Art Curator',
-        experience: 'Team Member',
+        bio: '',
+        specialization: 'Gallery Director',
+        experience: '',
         socialLinks: { instagram: '', behance: '' }
       }
     });
 
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: { artistId: createdArtist.id }
     });
@@ -150,12 +151,41 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { name, phone, address } = req.body;
+    const path = require('path');
+
+    // Handle profile image upload
+    let profileImage = undefined;
+    if (req.file) {
+      if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
+        profileImage = req.file.path;
+      } else {
+        profileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
+      }
+    }
+
+    const updateData = {
+      ...(name !== undefined && { name }),
+      ...(phone !== undefined && { phone }),
+      ...(address !== undefined && { address }),
+      ...(profileImage !== undefined && { profileImage }),
+    };
 
     const updated = await prisma.user.update({
       where: { id: req.user.id },
-      data: { name, phone, address },
-      select: { id: true, name: true, email: true, phone: true, address: true, role: true, artistId: true },
+      data: updateData,
+      select: { id: true, name: true, email: true, phone: true, address: true, profileImage: true, role: true, artistId: true },
     });
+
+    // Keep linked artist profile in sync
+    if (profileImage !== undefined && updated.artistId) {
+      await prisma.artist.update({
+        where: { id: updated.artistId },
+        data: {
+          ...(profileImage !== undefined && { profileImage }),
+          ...(name !== undefined && { name }),
+        },
+      });
+    }
 
     res.json(updated);
   } catch (error) {
@@ -188,7 +218,7 @@ const googleLogin = async (req, res) => {
     });
 
     if (!user) {
-      // Provision user
+      // Provision new user
       const finalRole = role === 'ARTIST' ? 'ARTIST' : 'USER';
       
       let createdArtist = null;
@@ -196,15 +226,14 @@ const googleLogin = async (req, res) => {
         createdArtist = await prisma.artist.create({
           data: {
             name,
-            bio: 'Artist bio is empty. Please edit profile to customize.',
-            specialization: 'Custom Artworks',
-            experience: 'New Artist',
+            bio: '',
+            specialization: '',
+            experience: '',
             socialLinks: { instagram: '', behance: '' }
           }
         });
       }
 
-      // Provision user with random secure password and authProvider set to "google"
       const randomPassword = Math.random().toString(36).slice(-12) + 'A1!';
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(randomPassword, salt);
@@ -215,28 +244,40 @@ const googleLogin = async (req, res) => {
           email,
           passwordHash,
           role: finalRole,
-          profileImage: picture,
+          profileImage: picture || null,
           authProvider: 'google',
           artistId: createdArtist ? createdArtist.id : null
         }
       });
     } else {
-      // If user exists:
-      // 1. Upgrade from USER to ARTIST if logging into curator portal
+      // Existing user — sync Google picture if they haven't set a custom one
+      const updateData = {
+        authProvider: 'google',
+        ...(picture && (!user.profileImage || user.profileImage.startsWith('https://lh3.googleusercontent.com') || user.profileImage.startsWith('https://googleusercontent.com')) && { profileImage: picture }),
+      };
+
+      // Upgrade from USER to ARTIST if logging into curator portal and they don't have an artist profile yet
       if (role === 'ARTIST' && user.role === 'USER') {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'ARTIST' }
-        });
+        updateData.role = 'ARTIST';
+        // Create a blank artist profile for them
+        if (!user.artistId) {
+          const newArtist = await prisma.artist.create({
+            data: {
+              name: user.name,
+              bio: '',
+              specialization: '',
+              experience: '',
+              socialLinks: { instagram: '', behance: '' }
+            }
+          });
+          updateData.artistId = newArtist.id;
+        }
       }
-      
-      // 2. Ensure authProvider matches if logging in via Google
-      if (user.authProvider !== 'google') {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { authProvider: 'google', profileImage: user.profileImage || picture }
-        });
-      }
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: updateData
+      });
     }
 
     // 3. Guarantee artist profile exists if role is admin/artist

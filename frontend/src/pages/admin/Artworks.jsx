@@ -102,14 +102,20 @@ export default function Artworks() {
 
   useEffect(() => {
     if (artists.length > 0 && !artistId) {
-      const matched = artists.find(a => a.userId === user?.id || a.email === user?.email);
-      if (matched) {
-        setArtistId(matched.id);
+      // Always default to the logged-in user's own artist profile
+      const myArtist = artists.find(a => a.userId === user?.id || a.email === user?.email);
+      if (myArtist) {
+        setArtistId(myArtist.id);
+      } else if (user?.artistId) {
+        setArtistId(user.artistId);
+      } else if (user?.role === 'SUPER_ADMIN') {
+        // Super admin fallback: show all
+        setArtistId('all');
       } else {
-        setArtistId(user?.role === 'SUPER_ADMIN' ? 'all' : artists[0].id);
+        setArtistId(artists[0].id);
       }
     }
-  }, [artists, artistId, user]);
+  }, [artists, user]);
 
   // Resolve matching artist profile for creator header
   const currentArtist = artistId && artistId !== 'all'
@@ -310,12 +316,17 @@ export default function Artworks() {
         {/* Clean Luxury Avatar */}
         <div className="relative flex-shrink-0">
           <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border border-gold/30 bg-zinc-950 p-1 shadow-xl">
-            <img
-              src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'}
-              alt=""
-              className="w-full h-full object-cover rounded-full"
-              onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'; }}
-            />
+            {currentArtist?.profileImage ? (
+              <img
+                src={resolveImageUrl(currentArtist.profileImage)}
+                alt=""
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center font-serif text-4xl text-mist/30">
+                {currentArtist?.name?.charAt(0) || user?.name?.charAt(0) || '?'}
+              </div>
+            )}
           </div>
         </div>
 
@@ -655,13 +666,18 @@ export default function Artworks() {
 
                     {/* Author IG Header info */}
                     <div className="flex items-center gap-3 border-b border-white/5 pb-3">
-                      <div className="w-8 h-8 rounded-full border border-gold/30 overflow-hidden">
-                        <img 
-                          src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'} 
-                          alt="" 
-                          className="w-full h-full object-cover" 
-                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'; }}
-                        />
+                      <div className="w-8 h-8 rounded-full border border-gold/30 overflow-hidden bg-zinc-900 flex items-center justify-center">
+                        {currentArtist?.profileImage ? (
+                          <img 
+                            src={resolveImageUrl(currentArtist.profileImage)} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <span className="font-serif text-sm text-mist/40">
+                            {currentArtist?.name?.charAt(0) || '?'}
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-1">
