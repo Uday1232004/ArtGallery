@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  artbro-db:
+    image: mysql:8.0
+    container_name: artbro-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: artbro_root_pass
+      MYSQL_DATABASE: art_gallery_db
+    ports:
+      - '3306:3306'
+    volumes:
+      - artbro_db_data:/var/lib/mysql
+
+volumes:
+  artbro_db_data:

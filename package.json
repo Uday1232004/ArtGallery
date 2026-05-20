@@ -6,7 +6,11 @@
   "scripts": {
     "clean-ports": "lsof -ti:5173,5001 | xargs kill -9 2>/dev/null || true",
     "predev": "npm run clean-ports",
-    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && node src/index.js\""
+    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && node src/index.js\"",
+    "setup": "node scripts/setup.js",
+    "db:start": "docker compose up -d",
+    "db:stop": "docker compose down",
+    "db:reset": "cd backend && npx prisma db push --force-reset && npx prisma db seed && node prisma/consolidate.js"
   },
   "repository": {
     "type": "git",

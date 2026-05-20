@@ -13,9 +13,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ─── Health Check ──────────────────────────────────────
+// ─── Health Checks ──────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'ArtBro Sketches API is running' });
+});
+
+app.get('/api/db-health', async (req, res) => {
+  try {
+    const prisma = require('./utils/prismaClient');
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ status: 'healthy', database: 'connected', message: 'MySQL Database connection is fully operational' });
+  } catch (error) {
+    console.error('Database Health Check Failed:', error);
+    res.status(500).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
+  }
 });
 
 // ─── Import Routes ─────────────────────────────────────
