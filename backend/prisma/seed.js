@@ -1,27 +1,28 @@
-const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcryptjs')
-const prisma = new PrismaClient()
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const prisma = new PrismaClient();
+const { copySeedAssetSafely } = require('../src/utils/assetHelper');
 
 async function main() {
-  console.log('Start seeding...')
+  console.log('Start seeding...');
 
   // Clean up existing data
-  await prisma.cartItem.deleteMany()
-  await prisma.wishlistItem.deleteMany()
-  await prisma.orderItem.deleteMany()
-  await prisma.order.deleteMany()
-  await prisma.review.deleteMany()
-  await prisma.sale.deleteMany()
-  await prisma.commission.deleteMany()
-  await prisma.exhibitionArtwork.deleteMany()
-  await prisma.exhibition.deleteMany()
-  await prisma.artwork.deleteMany()
-  await prisma.artist.deleteMany()
-  await prisma.user.deleteMany()
+  await prisma.cartItem.deleteMany();
+  await prisma.wishlistItem.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.sale.deleteMany();
+  await prisma.commission.deleteMany();
+  await prisma.exhibitionArtwork.deleteMany();
+  await prisma.exhibition.deleteMany();
+  await prisma.artwork.deleteMany();
+  await prisma.artist.deleteMany();
+  await prisma.user.deleteMany();
 
   // 1. Create Super Admin User
-  const salt = await bcrypt.genSalt(10)
-  const passwordHash = await bcrypt.hash('admin123', salt)
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash('admin123', salt);
 
   const admin = await prisma.user.create({
     data: {
@@ -30,8 +31,11 @@ async function main() {
       name: 'Uday Chandra (Admin)',
       role: 'SUPER_ADMIN',
     },
-  })
-  console.log(`Created admin user: ${admin.email}`)
+  });
+  console.log(`Created admin user: ${admin.email}`);
+
+  // Copy seed asset for the artist profile image
+  const profileImagePath = copySeedAssetSafely('sketch_1.jpeg', 'profiles');
 
   // 2. Create the main Artist Profile
   const artist = await prisma.artist.create({
@@ -40,17 +44,17 @@ async function main() {
       bio: 'Engineering student and self-taught artist exploring the intersection of emotion, logic, and visual storytelling.',
       specialization: 'Pencil realistic portraits, Pen art, Krishna artworks',
       experience: 'Self-taught, 10+ years sketching',
-      profileImage: '/uploads/seeding/sketch_1.jpeg',
+      profileImage: profileImagePath,
       socialLinks: {
         instagram: 'https://instagram.com/_art__bro_/',
         behance: 'https://behance.net/udaychandra'
       }
     }
-  })
-  console.log(`Created artist: ${artist.name}`)
+  });
+  console.log(`Created artist: ${artist.name}`);
 
   // Create Artist User
-  const artistPasswordHash = await bcrypt.hash('password123', salt)
+  const artistPasswordHash = await bcrypt.hash('password123', salt);
   const artistUser = await prisma.user.create({
     data: {
       email: 'artist@artbro.com',
@@ -58,12 +62,12 @@ async function main() {
       name: 'Uday Chandra',
       role: 'ARTIST',
       artistId: artist.id,
-      avatar: '/uploads/seeding/sketch_1.jpeg',
+      avatar: profileImagePath,
     },
-  })
-  console.log(`Created artist user: ${artistUser.email}`)
+  });
+  console.log(`Created artist user: ${artistUser.email}`);
 
-  // 3. Create All 12 Public Artworks
+  // 3. Create All 12 Public Artworks with copied seed images
   const artworksData = [
     {
       title: 'The Gaze',
@@ -72,7 +76,7 @@ async function main() {
       medium: 'Graphite on Paper',
       price: 850,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_1.jpeg',
+      image: copySeedAssetSafely('sketch_1.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -87,7 +91,7 @@ async function main() {
       medium: 'Charcoal on Paper',
       price: 1200,
       yearCreated: 2026,
-      image: '/uploads/seeding/sketch_2.jpeg',
+      image: copySeedAssetSafely('sketch_2.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -102,7 +106,7 @@ async function main() {
       medium: 'Mixed Media',
       price: 600,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_3.jpeg',
+      image: copySeedAssetSafely('sketch_3.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'SOLD',
@@ -117,7 +121,7 @@ async function main() {
       medium: 'Pencil Sketch',
       price: 750,
       yearCreated: 2024,
-      image: '/uploads/seeding/sketch_4.jpeg',
+      image: copySeedAssetSafely('sketch_4.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'SOLD',
@@ -132,7 +136,7 @@ async function main() {
       medium: 'Fineliner',
       price: 450,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_5.jpeg',
+      image: copySeedAssetSafely('sketch_5.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -147,7 +151,7 @@ async function main() {
       medium: 'Graphite',
       price: 1500,
       yearCreated: 2026,
-      image: '/uploads/seeding/sketch_6.jpeg',
+      image: copySeedAssetSafely('sketch_6.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -162,7 +166,7 @@ async function main() {
       medium: 'Micron Pen',
       price: 550,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_7.jpeg',
+      image: copySeedAssetSafely('sketch_7.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'SOLD',
@@ -177,7 +181,7 @@ async function main() {
       medium: 'Charcoal Wash',
       price: 950,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_8.jpeg',
+      image: copySeedAssetSafely('sketch_8.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -192,7 +196,7 @@ async function main() {
       medium: 'Pencil',
       price: 800,
       yearCreated: 2024,
-      image: '/uploads/seeding/sketch_9.jpeg',
+      image: copySeedAssetSafely('sketch_9.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'SOLD',
@@ -207,7 +211,7 @@ async function main() {
       medium: 'Pencil Sketch',
       price: 1100,
       yearCreated: 2026,
-      image: '/uploads/seeding/sketch_10.jpeg',
+      image: copySeedAssetSafely('sketch_10.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -222,7 +226,7 @@ async function main() {
       medium: 'Charcoal on Paper',
       price: 900,
       yearCreated: 2025,
-      image: '/uploads/seeding/sketch_11.jpeg',
+      image: copySeedAssetSafely('sketch_11.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -237,7 +241,7 @@ async function main() {
       medium: 'Fineliner',
       price: 650,
       yearCreated: 2026,
-      image: '/uploads/seeding/sketch_12.jpeg',
+      image: copySeedAssetSafely('sketch_12.jpeg', 'artworks'),
       featured: true,
       artistId: artist.id,
       status: 'AVAILABLE',
@@ -245,14 +249,16 @@ async function main() {
       stock: 1,
       isOriginal: true
     }
-  ]
+  ];
 
   for (const aw of artworksData) {
-    const artwork = await prisma.artwork.create({ data: aw })
-    console.log(`Created artwork: ${artwork.title}`)
+    const artwork = await prisma.artwork.create({ data: aw });
+    console.log(`Created artwork: ${artwork.title}`);
   }
 
-  // 4. Create an Exhibition
+  // 4. Create an Exhibition with copied seed image
+  const exhibitionBannerPath = copySeedAssetSafely('sketch_3.jpeg', 'exhibitions');
+
   const exhibition = await prisma.exhibition.create({
     data: {
       name: 'Shadows & Light: Solo Exhibition',
@@ -261,21 +267,21 @@ async function main() {
       startDate: new Date('2024-06-01T00:00:00Z'),
       endDate: new Date('2024-06-30T23:59:59Z'),
       location: 'Virtual Gallery',
-      bannerImage: '/uploads/seeding/sketch_3.jpeg'
+      bannerImage: exhibitionBannerPath
     }
-  })
+  });
   
   // Link artworks to exhibition
-  const allArtworks = await prisma.artwork.findMany()
+  const allArtworks = await prisma.artwork.findMany();
   for (const aw of allArtworks) {
     await prisma.exhibitionArtwork.create({
       data: {
         exhibitionId: exhibition.id,
         artworkId: aw.id
       }
-    })
+    });
   }
-  console.log(`Created exhibition: ${exhibition.name}`)
+  console.log(`Created exhibition: ${exhibition.name}`);
 
   // 5. Create a Sample Commission Request
   await prisma.commission.create({
@@ -294,17 +300,17 @@ async function main() {
       paymentStatus: 'PAID',
       artistId: artist.id
     }
-  })
-  console.log(`Created sample commission request`)
+  });
+  console.log(`Created sample commission request`);
 
-  console.log('Seeding finished.')
+  console.log('Seeding finished.');
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

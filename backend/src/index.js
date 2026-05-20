@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -62,6 +63,75 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+
+async function runStartupDiagnostics() {
+  console.log('🔍 Starting Asset Diagnostics...');
+  const prisma = require('./utils/prismaClient');
+  
+  try {
+    // 1. Validate Artworks
+    const artworks = await prisma.artwork.findMany({
+      select: { title: true, image: true }
+    });
+    for (const art of artworks) {
+      if (art.image && !art.image.startsWith('http')) {
+        const relativePath = art.image.startsWith('/') ? art.image.substring(1) : art.image;
+        const fullPath = path.join(__dirname, '..', relativePath);
+        if (!fs.existsSync(fullPath)) {
+          console.warn(`⚠️ Warning: Missing artwork file for "${art.title}" at expected path: ${fullPath}`);
+        }
+      }
+    }
+
+    // 2. Validate Artists
+    const artists = await prisma.artist.findMany({
+      select: { name: true, profileImage: true }
+    });
+    for (const artist of artists) {
+      if (artist.profileImage && !artist.profileImage.startsWith('http')) {
+        const relativePath = artist.profileImage.startsWith('/') ? artist.profileImage.substring(1) : artist.profileImage;
+        const fullPath = path.join(__dirname, '..', relativePath);
+        if (!fs.existsSync(fullPath)) {
+          console.warn(`⚠️ Warning: Missing profile image for artist "${artist.name}" at expected path: ${fullPath}`);
+        }
+      }
+    }
+
+    // 3. Validate User Avatars
+    const users = await prisma.user.findMany({
+      select: { name: true, email: true, avatar: true }
+    });
+    for (const user of users) {
+      if (user.avatar && !user.avatar.startsWith('http')) {
+        const relativePath = user.avatar.startsWith('/') ? user.avatar.substring(1) : user.avatar;
+        const fullPath = path.join(__dirname, '..', relativePath);
+        if (!fs.existsSync(fullPath)) {
+          console.warn(`⚠️ Warning: Missing avatar image for user "${user.name}" (${user.email}) at expected path: ${fullPath}`);
+        }
+      }
+    }
+
+    // 4. Validate Exhibition Banners
+    const exhibitions = await prisma.exhibition.findMany({
+      select: { name: true, bannerImage: true }
+    });
+    for (const ex of exhibitions) {
+      if (ex.bannerImage && !ex.bannerImage.startsWith('http')) {
+        const relativePath = ex.bannerImage.startsWith('/') ? ex.bannerImage.substring(1) : ex.bannerImage;
+        const fullPath = path.join(__dirname, '..', relativePath);
+        if (!fs.existsSync(fullPath)) {
+          console.warn(`⚠️ Warning: Missing banner image for exhibition "${ex.name}" at expected path: ${fullPath}`);
+        }
+      }
+    }
+    console.log('✅ Asset Diagnostics completed.');
+  } catch (error) {
+    console.error('❌ Diagnostics failed:', error.message);
+  }
+}
+
+app.listen(PORT, async () => {
   console.log(`🎨 ArtBro Sketches API running on port ${PORT}`);
+  await runStartupDiagnostics();
 });
+
