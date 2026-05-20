@@ -28,7 +28,7 @@ const getArtists = async (req, res) => {
       ...a,
       userId: a.user?.id || null,
       email: a.user?.email || null,
-      profileImage: a.user?.profileImage || null,
+      profileImage: a.user?.profileImage || a.profileImage || null,
       user: undefined
     }));
 
@@ -69,7 +69,7 @@ const getArtistById = async (req, res) => {
         ...artist,
         userId: artist.user?.id || null,
         email: artist.user?.email || null,
-        profileImage: artist.user?.profileImage || null,
+        profileImage: artist.user?.profileImage || artist.profileImage || null,
         user: undefined
       };
       res.json(mapped);
@@ -107,6 +107,7 @@ const createArtist = async (req, res) => {
         location,
         specialization,
         experience,
+        profileImage: profileImage || null,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : null,
       }
     });
@@ -161,6 +162,7 @@ const updateArtist = async (req, res) => {
         location: location !== undefined ? location : undefined,
         specialization: specialization !== undefined ? specialization : undefined,
         experience: experience !== undefined ? experience : undefined,
+        profileImage: newProfileImage !== undefined ? newProfileImage : undefined,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : undefined,
       }
     });
@@ -175,12 +177,14 @@ const updateArtist = async (req, res) => {
       });
       currentProfileImage = newProfileImage;
     } else {
-      // If we didn't update it, fetch the current one so we can return it
-      const existingUser = await prisma.user.findFirst({
-        where: { artistId: updatedArtist.id },
-        select: { profileImage: true }
-      });
-      currentProfileImage = existingUser?.profileImage || null;
+      currentProfileImage = updatedArtist.profileImage || null;
+      if (!currentProfileImage) {
+        const existingUser = await prisma.user.findFirst({
+          where: { artistId: updatedArtist.id },
+          select: { profileImage: true }
+        });
+        currentProfileImage = existingUser?.profileImage || null;
+      }
     }
 
     console.log(`[UpdateArtist] ✅ Saved. Artist.id=${updatedArtist.id} | profileImage=${currentProfileImage}`);

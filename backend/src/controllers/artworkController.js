@@ -31,7 +31,7 @@ const getArtworks = async (req, res) => {
       },
       include: {
         artist: {
-          select: { name: true }
+          select: { id: true, name: true, profileImage: true, user: { select: { profileImage: true } } }
         }
       }
     });

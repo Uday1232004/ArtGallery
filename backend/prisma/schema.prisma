@@ -54,6 +54,7 @@ model Artist {
   location       String?
   specialization String       // Used as 'Title' / Profession
   experience     String?
+  profileImage   String?      // Local or Cloudinary URL
   socialLinks    Json?        // { instagram, behance, twitter }
   isVerified     Boolean      @default(false)
   followersCount Int          @default(0)
