@@ -17,7 +17,7 @@ model User {
   passwordHash String
   name         String
   phone        String?
-  avatar       String?  // Cloudinary URL
+  profileImage String?  // Local or Cloudinary URL
   address      String?  @db.Text
   role         Role     @default(USER)
   authProvider String   @default("local")
@@ -54,7 +54,6 @@ model Artist {
   location       String?
   specialization String       // Used as 'Title' / Profession
   experience     String?
-  profileImage   String?      // Cloudinary URL
   socialLinks    Json?        // { instagram, behance, twitter }
   isVerified     Boolean      @default(false)
   followersCount Int          @default(0)

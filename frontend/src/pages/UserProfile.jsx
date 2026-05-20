@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useCartStore } from '../store/cartStore';
-import api, { resolveImageUrl } from '../lib/axios';
+import api, { normalizeImageUrl } from '../lib/axios';
 import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
@@ -240,7 +240,7 @@ export default function UserProfile() {
                           {/* Image preview & basic details */}
                           <div className="flex gap-6 items-start flex-1">
                             {comm.referenceImage ? (
-                              <img src={resolveImageUrl(comm.referenceImage)} alt="Reference" className="w-20 h-20 object-cover border border-white/10 sepia-[0.1]" />
+                              <img src={normalizeImageUrl(comm.referenceImage)} alt="Reference" className="w-20 h-20 object-cover border border-white/10 sepia-[0.1]" />
                             ) : (
                               <div className="w-20 h-20 bg-white/5 flex items-center justify-center font-sans text-[10px] text-mist/50 border border-white/10 text-center">No Image</div>
                             )}

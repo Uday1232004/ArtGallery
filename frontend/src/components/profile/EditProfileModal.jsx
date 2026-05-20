@@ -5,7 +5,7 @@ import { X, Camera, Save, MapPin, Link as LinkIcon, Image as ImageIcon, Crop as 
 import { useDropzone } from 'react-dropzone';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import api, { resolveImageUrl } from '../../lib/axios';
+import api, { normalizeImageUrl } from '../../lib/axios';
 import { useAuthStore } from '../../store/authStore';
 import { canvasPreview } from '../../utils/canvasPreview';
 
@@ -305,7 +305,7 @@ export default function EditProfileModal({ isOpen, onClose, currentArtist }) {
                       
                       {previewUrl ? (
                         <img 
-                          src={previewUrl.startsWith('blob:') ? previewUrl : resolveImageUrl(previewUrl)} 
+                          src={previewUrl.startsWith('blob:') ? previewUrl : normalizeImageUrl(previewUrl)} 
                           alt="Avatar Preview" 
                           className="w-full h-full object-cover rounded-full"
                         />

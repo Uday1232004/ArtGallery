@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ShoppingCart, User } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
 import { useAuthStore } from '../store/authStore'
-import { resolveImageUrl } from '../lib/axios'
+import { normalizeImageUrl } from '../lib/axios'
 import { getLenis } from '../animations/lenis'
 
 /**
@@ -147,7 +147,7 @@ export default function Navbar() {
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
                       {user?.profileImage && (
                         <img 
-                          src={resolveImageUrl(user.profileImage)} 
+                          src={normalizeImageUrl(user.profileImage)} 
                           alt="Avatar" 
                           className="w-full h-full object-cover absolute top-0 left-0" 
                           onError={(e) => { e.target.style.display = 'none'; }} 
@@ -169,7 +169,7 @@ export default function Navbar() {
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
                       {user?.profileImage && (
                         <img 
-                          src={resolveImageUrl(user.profileImage)} 
+                          src={normalizeImageUrl(user.profileImage)} 
                           alt="Avatar" 
                           className="w-full h-full object-cover absolute top-0 left-0" 
                           onError={(e) => { e.target.style.display = 'none'; }} 

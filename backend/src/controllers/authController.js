@@ -39,7 +39,6 @@ const register = async (req, res) => {
           bio: bio || 'Resident sketch artist and visual storyteller exploring depth and light.',
           specialization: specialization || 'Pencil Realism & Sketches',
           experience: experience || 'Self-taught artist',
-          profileImage: profileImage || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
           socialLinks: { instagram: '', behance: '' }
         }
       });
@@ -51,6 +50,7 @@ const register = async (req, res) => {
         email,
         passwordHash,
         role: finalRole,
+        profileImage: profileImage || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
         artistId: createdArtist ? createdArtist.id : null
       },
     });
@@ -77,7 +77,6 @@ const ensureArtistProfile = async (user) => {
         bio: 'Artist bio is empty. Please edit profile to customize.',
         specialization: user.role === 'SUPER_ADMIN' ? 'Gallery Director' : 'Fine Art Curator',
         experience: 'Team Member',
-        profileImage: user.avatar || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
         socialLinks: { instagram: '', behance: '' }
       }
     });
@@ -100,29 +99,18 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     let user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        artist: {
-          select: { profileImage: true }
-        }
-      }
+      where: { email }
     });
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       // Auto-ensure profile for admin/artist roles on login
       user = await ensureArtistProfile(user);
 
-      // Resolve profile image: Artist.profileImage takes priority over User.avatar
-      const profileImage = user.artist?.profileImage || user.avatar || null;
-
-      console.log(`[Login] User: ${user.email} | Artist.profileImage: ${user.artist?.profileImage} | Resolved: ${profileImage}`);
-
       res.json({
         id: user.id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar,
-        profileImage,          // ← The single consistent field frontend should use
+        profileImage: user.profileImage,
         role: user.role,
         artistId: user.artistId,
         token: generateToken(user.id, user.role),
@@ -143,24 +131,14 @@ const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true, phone: true, avatar: true, address: true, role: true, artistId: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, profileImage: true, address: true, role: true, artistId: true, createdAt: true },
     });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Also resolve profileImage from the linked Artist record
-    let profileImage = user.avatar;
-    if (user.artistId) {
-      const artist = await prisma.artist.findUnique({
-        where: { id: user.artistId },
-        select: { profileImage: true }
-      });
-      if (artist?.profileImage) profileImage = artist.profileImage;
-    }
-
-    res.json({ ...user, profileImage });
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
@@ -221,7 +199,6 @@ const googleLogin = async (req, res) => {
             bio: 'Artist bio is empty. Please edit profile to customize.',
             specialization: 'Custom Artworks',
             experience: 'New Artist',
-            profileImage: picture || 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
             socialLinks: { instagram: '', behance: '' }
           }
         });
@@ -238,7 +215,7 @@ const googleLogin = async (req, res) => {
           email,
           passwordHash,
           role: finalRole,
-          avatar: picture,
+          profileImage: picture,
           authProvider: 'google',
           artistId: createdArtist ? createdArtist.id : null
         }
@@ -257,7 +234,7 @@ const googleLogin = async (req, res) => {
       if (user.authProvider !== 'google') {
         user = await prisma.user.update({
           where: { id: user.id },
-          data: { authProvider: 'google', avatar: user.avatar || picture }
+          data: { authProvider: 'google', profileImage: user.profileImage || picture }
         });
       }
     }
@@ -265,22 +242,11 @@ const googleLogin = async (req, res) => {
     // 3. Guarantee artist profile exists if role is admin/artist
     user = await ensureArtistProfile(user);
 
-    // Resolve profile image from linked artist if it exists
-    let profileImage = user.avatar || picture;
-    if (user.artistId) {
-      const artistRecord = await prisma.artist.findUnique({
-        where: { id: user.artistId },
-        select: { profileImage: true }
-      });
-      if (artistRecord?.profileImage) profileImage = artistRecord.profileImage;
-    }
-
     res.json({
       id: user.id,
       name: user.name,
       email: user.email,
-      avatar: user.avatar || picture,
-      profileImage,          // ← The single consistent field frontend should use
+      profileImage: user.profileImage,
       role: user.role,
       artistId: user.artistId,
       authProvider: user.authProvider,

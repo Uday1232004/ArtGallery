@@ -10,7 +10,8 @@ const getArtists = async (req, res) => {
         user: {
           select: {
             id: true,
-            email: true
+            email: true,
+            profileImage: true
           }
         },
         artworks: {
@@ -27,6 +28,7 @@ const getArtists = async (req, res) => {
       ...a,
       userId: a.user?.id || null,
       email: a.user?.email || null,
+      profileImage: a.user?.profileImage || null,
       user: undefined
     }));
 
@@ -48,7 +50,8 @@ const getArtistById = async (req, res) => {
         user: {
           select: {
             id: true,
-            email: true
+            email: true,
+            profileImage: true
           }
         },
         artworks: true,
@@ -66,6 +69,7 @@ const getArtistById = async (req, res) => {
         ...artist,
         userId: artist.user?.id || null,
         email: artist.user?.email || null,
+        profileImage: artist.user?.profileImage || null,
         user: undefined
       };
       res.json(mapped);
@@ -103,10 +107,14 @@ const createArtist = async (req, res) => {
         location,
         specialization,
         experience,
-        profileImage: profileImage || null,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : null,
       }
     });
+
+    // If a profile image is provided during manual artist creation, try to link it to a user if one gets created later,
+    // but since we removed Artist.profileImage, we can only update the User if it exists.
+    // However, createArtist doesn't have a linked user yet. So we just ignore the upload.
+    
     res.status(201).json(artist);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
@@ -128,18 +136,18 @@ const updateArtist = async (req, res) => {
       return res.status(404).json({ message: 'Artist not found' });
     }
 
-    let profileImage = existingArtist.profileImage;
+    let newProfileImage = undefined;
     if (req.file) {
       const path = require('path');
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
-        profileImage = req.file.path;
+        newProfileImage = req.file.path;
       } else {
-        profileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
+        newProfileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
       }
       console.log(`[UpdateArtist] File uploaded: ${req.file.originalname} → ${req.file.path}`);
-      console.log(`[UpdateArtist] DB path will be: ${profileImage}`);
+      console.log(`[UpdateArtist] DB path will be: ${newProfileImage}`);
     } else if (req.body.removeImage === 'true') {
-      profileImage = null;
+      newProfileImage = null;
       console.log(`[UpdateArtist] Image removal requested`);
     }
 
@@ -153,22 +161,34 @@ const updateArtist = async (req, res) => {
         location: location !== undefined ? location : undefined,
         specialization: specialization !== undefined ? specialization : undefined,
         experience: experience !== undefined ? experience : undefined,
-        profileImage,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : undefined,
       }
     });
 
-    // Keep the User model perfectly in sync with the Artist model
-    if (profileImage !== undefined) {
+    let currentProfileImage = null;
+
+    // Keep the User model perfectly in sync with the Artist model updates
+    if (newProfileImage !== undefined) {
       await prisma.user.updateMany({
         where: { artistId: updatedArtist.id },
-        data: { avatar: profileImage }
+        data: { profileImage: newProfileImage }
       });
+      currentProfileImage = newProfileImage;
+    } else {
+      // If we didn't update it, fetch the current one so we can return it
+      const existingUser = await prisma.user.findFirst({
+        where: { artistId: updatedArtist.id },
+        select: { profileImage: true }
+      });
+      currentProfileImage = existingUser?.profileImage || null;
     }
 
-    console.log(`[UpdateArtist] ✅ Saved. Artist.id=${updatedArtist.id} | profileImage=${updatedArtist.profileImage}`);
+    console.log(`[UpdateArtist] ✅ Saved. Artist.id=${updatedArtist.id} | profileImage=${currentProfileImage}`);
 
-    res.json(updatedArtist);
+    res.json({
+      ...updatedArtist,
+      profileImage: currentProfileImage
+    });
   } catch (error) {
     console.error('[UpdateArtist] ❌ Error:', error);
     res.status(500).json({ message: 'Server Error' });
