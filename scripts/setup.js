@@ -93,16 +93,13 @@ function main() {
   log(colors.yellow, '🌾 Running database seeder...');
   runCommand('npx prisma db seed', backendDir);
 
-  // 5. Consolidate Artist Profiles & Artworks
-  logTitle('🔮 Step 5: Consolidating Artist Profiles & Artwork Permissions');
-  
-  log(colors.yellow, '🔗 Linking seeded catalog to your primary Google Admin account...');
-  runCommand('node prisma/consolidate.js', backendDir);
-
+  // 5. Done — no consolidation needed (single account system)
   logTitle('🎉 Setup Completed Successfully!');
   console.log(`${colors.bright}${colors.green}ArtBro Sketches is ready for action!${colors.reset}`);
   console.log(`\nTo launch the system:`);
   console.log(`${colors.yellow}  npm run dev${colors.reset}\n`);
+  console.log(`${colors.cyan}Frontend: http://localhost:5173${colors.reset}`);
+  console.log(`${colors.cyan}Backend:  http://localhost:5001/api/health${colors.reset}\n`);
 }
 
 main();
