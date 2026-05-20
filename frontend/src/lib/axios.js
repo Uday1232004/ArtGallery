@@ -3,17 +3,22 @@ import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
-// Request interceptor for adding the auth token
+// Request interceptor for adding the auth token and handling FormData
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // When sending FormData, delete Content-Type so Axios auto-sets
+  // the correct multipart/form-data boundary. Without this, the
+  // default 'application/json' header prevents multer from parsing files.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
   return config;
 });
 
