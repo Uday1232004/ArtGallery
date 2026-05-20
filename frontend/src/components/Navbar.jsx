@@ -144,14 +144,18 @@ export default function Navbar() {
                     to="/admin"
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
-                      {user?.profileImage ? (
-                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
-                          {user?.name?.charAt(0) || user?.username?.charAt(0) || 'A'}
-                        </div>
+                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
+                      {user?.profileImage && (
+                        <img 
+                          src={resolveImageUrl(user.profileImage)} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover absolute top-0 left-0" 
+                          onError={(e) => { e.target.style.display = 'none'; }} 
+                        />
                       )}
+                      <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
+                        {user?.name?.charAt(0) || user?.username?.charAt(0) || 'A'}
+                      </div>
                     </div>
                     <span className="font-sans text-[11px] tracking-[0.2em] text-gold uppercase hidden lg:block">
                       {user?.name || user?.username || 'Admin Dashboard'}
@@ -162,14 +166,18 @@ export default function Navbar() {
                     to="/profile"
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                   >
-                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
-                      {user?.profileImage ? (
-                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
-                          {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                        </div>
+                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
+                      {user?.profileImage && (
+                        <img 
+                          src={resolveImageUrl(user.profileImage)} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover absolute top-0 left-0" 
+                          onError={(e) => { e.target.style.display = 'none'; }} 
+                        />
                       )}
+                      <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
+                        {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                      </div>
                     </div>
                     <span className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hidden lg:block">
                       {user?.name || user?.username || 'Profile'}

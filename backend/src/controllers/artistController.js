@@ -158,6 +158,14 @@ const updateArtist = async (req, res) => {
       }
     });
 
+    // Keep the User model perfectly in sync with the Artist model
+    if (profileImage !== undefined) {
+      await prisma.user.updateMany({
+        where: { artistId: updatedArtist.id },
+        data: { avatar: profileImage }
+      });
+    }
+
     console.log(`[UpdateArtist] ✅ Saved. Artist.id=${updatedArtist.id} | profileImage=${updatedArtist.profileImage}`);
 
     res.json(updatedArtist);
