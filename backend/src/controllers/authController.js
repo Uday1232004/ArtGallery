@@ -99,17 +99,30 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        artist: {
+          select: { profileImage: true }
+        }
+      }
+    });
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       // Auto-ensure profile for admin/artist roles on login
       user = await ensureArtistProfile(user);
+
+      // Resolve profile image: Artist.profileImage takes priority over User.avatar
+      const profileImage = user.artist?.profileImage || user.avatar || null;
+
+      console.log(`[Login] User: ${user.email} | Artist.profileImage: ${user.artist?.profileImage} | Resolved: ${profileImage}`);
 
       res.json({
         id: user.id,
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        profileImage,          // ← The single consistent field frontend should use
         role: user.role,
         artistId: user.artistId,
         token: generateToken(user.id, user.role),
@@ -133,11 +146,21 @@ const getProfile = async (req, res) => {
       select: { id: true, name: true, email: true, phone: true, avatar: true, address: true, role: true, artistId: true, createdAt: true },
     });
 
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    // Also resolve profileImage from the linked Artist record
+    let profileImage = user.avatar;
+    if (user.artistId) {
+      const artist = await prisma.artist.findUnique({
+        where: { id: user.artistId },
+        select: { profileImage: true }
+      });
+      if (artist?.profileImage) profileImage = artist.profileImage;
+    }
+
+    res.json({ ...user, profileImage });
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
@@ -242,11 +265,22 @@ const googleLogin = async (req, res) => {
     // 3. Guarantee artist profile exists if role is admin/artist
     user = await ensureArtistProfile(user);
 
+    // Resolve profile image from linked artist if it exists
+    let profileImage = user.avatar || picture;
+    if (user.artistId) {
+      const artistRecord = await prisma.artist.findUnique({
+        where: { id: user.artistId },
+        select: { profileImage: true }
+      });
+      if (artistRecord?.profileImage) profileImage = artistRecord.profileImage;
+    }
+
     res.json({
       id: user.id,
       name: user.name,
       email: user.email,
       avatar: user.avatar || picture,
+      profileImage,          // ← The single consistent field frontend should use
       role: user.role,
       artistId: user.artistId,
       authProvider: user.authProvider,

@@ -73,8 +73,17 @@ export default function AdminLayout() {
 
         <div className="p-6 border-t border-white/5">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold font-serif">
-              {user?.name?.charAt(0) || 'A'}
+            <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold font-serif overflow-hidden">
+              {user?.profileImage ? (
+                <img
+                  src={user.profileImage.startsWith('/') ? `${(import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace('/api', '')}${user.profileImage}` : user.profileImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = user?.name?.charAt(0) || 'A'; }}
+                />
+              ) : (
+                user?.name?.charAt(0) || 'A'
+              )}
             </div>
             <div>
               <p className="font-sans text-xs text-ivory">{user?.name}</p>

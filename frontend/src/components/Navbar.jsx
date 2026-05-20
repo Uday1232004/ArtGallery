@@ -146,7 +146,7 @@ export default function Navbar() {
                   >
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
                       {user?.profileImage ? (
-                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
                           {user?.name?.charAt(0) || user?.username?.charAt(0) || 'A'}
@@ -164,7 +164,7 @@ export default function Navbar() {
                   >
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
                       {user?.profileImage ? (
-                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(user.profileImage)} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
                           {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}

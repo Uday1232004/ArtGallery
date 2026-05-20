@@ -40,7 +40,7 @@ async function main() {
       bio: 'Engineering student and self-taught artist exploring the intersection of emotion, logic, and visual storytelling.',
       specialization: 'Pencil realistic portraits, Pen art, Krishna artworks',
       experience: 'Self-taught, 10+ years sketching',
-      profileImage: '/uploads/profileImage-1779207460662-736920481.jpg',
+      profileImage: '/uploads/seeding/sketch_1.jpeg',
       socialLinks: {
         instagram: 'https://instagram.com/_art__bro_/',
         behance: 'https://behance.net/udaychandra'
@@ -58,7 +58,7 @@ async function main() {
       name: 'Uday Chandra',
       role: 'ARTIST',
       artistId: artist.id,
-      avatar: '/uploads/profileImage-1779207460662-736920481.jpg',
+      avatar: '/uploads/seeding/sketch_1.jpeg',
     },
   })
   console.log(`Created artist user: ${artistUser.email}`)

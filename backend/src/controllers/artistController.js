@@ -136,8 +136,11 @@ const updateArtist = async (req, res) => {
       } else {
         profileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
       }
+      console.log(`[UpdateArtist] File uploaded: ${req.file.originalname} → ${req.file.path}`);
+      console.log(`[UpdateArtist] DB path will be: ${profileImage}`);
     } else if (req.body.removeImage === 'true') {
       profileImage = null;
+      console.log(`[UpdateArtist] Image removal requested`);
     }
 
     const updatedArtist = await prisma.artist.update({
@@ -155,9 +158,11 @@ const updateArtist = async (req, res) => {
       }
     });
 
+    console.log(`[UpdateArtist] ✅ Saved. Artist.id=${updatedArtist.id} | profileImage=${updatedArtist.profileImage}`);
+
     res.json(updatedArtist);
   } catch (error) {
-    console.error(error);
+    console.error('[UpdateArtist] ❌ Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
