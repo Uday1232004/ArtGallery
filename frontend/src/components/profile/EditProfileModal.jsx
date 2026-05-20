@@ -461,10 +461,10 @@ export default function EditProfileModal({ isOpen, onClose, currentArtist }) {
               <button
                 type="submit"
                 form="profile-form"
-                disabled={updateProfileMutation.isLoading}
+                disabled={updateProfileMutation.isPending}
                 className="px-8 py-2.5 rounded-lg font-sans text-xs font-bold bg-blue-600 text-white hover:bg-blue-500 transition-colors flex items-center gap-2"
               >
-                {updateProfileMutation.isLoading ? 'Saving...' : 'Submit'}
+                {updateProfileMutation.isPending ? 'Saving...' : 'Submit'}
               </button>
             </div>
           )}

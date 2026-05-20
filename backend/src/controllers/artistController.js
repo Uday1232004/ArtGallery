@@ -136,18 +136,20 @@ const updateArtist = async (req, res) => {
       } else {
         profileImage = `/uploads/${path.basename(req.file.path)}`;
       }
+    } else if (req.body.removeImage === 'true') {
+      profileImage = null;
     }
 
     const updatedArtist = await prisma.artist.update({
       where: { id: req.params.id },
       data: {
-        name: name || undefined,
-        username: username || undefined,
-        bio: bio || undefined,
-        website: website || undefined,
-        location: location || undefined,
-        specialization: specialization || undefined,
-        experience: experience || undefined,
+        name: name !== undefined ? name : undefined,
+        username: username !== undefined ? username : undefined,
+        bio: bio !== undefined ? bio : undefined,
+        website: website !== undefined ? website : undefined,
+        location: location !== undefined ? location : undefined,
+        specialization: specialization !== undefined ? specialization : undefined,
+        experience: experience !== undefined ? experience : undefined,
         profileImage,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : undefined,
       }
