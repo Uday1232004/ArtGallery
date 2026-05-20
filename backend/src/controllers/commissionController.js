@@ -30,7 +30,7 @@ const createCommission = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         referenceImage = req.file.path;
       } else {
-        referenceImage = `/uploads/${path.basename(req.file.path)}`;
+        referenceImage = `/uploads/commissions/${path.basename(req.file.path)}`;
       }
     }
 

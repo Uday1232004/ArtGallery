@@ -36,9 +36,10 @@ if (isCloudinaryConfigured) {
   const artworksDir = path.join(uploadDir, 'artworks');
   const exhibitionsDir = path.join(uploadDir, 'exhibitions');
   const seedingDir = path.join(uploadDir, 'seeding');
+  const commissionsDir = path.join(uploadDir, 'commissions');
 
   // Ensure all directories exist
-  [uploadDir, profilesDir, artworksDir, exhibitionsDir, seedingDir].forEach(dir => {
+  [uploadDir, profilesDir, artworksDir, exhibitionsDir, seedingDir, commissionsDir].forEach(dir => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -49,8 +50,10 @@ if (isCloudinaryConfigured) {
       let destFolder = uploadDir;
       if (file.fieldname === 'profileImage' || file.fieldname === 'avatar') {
         destFolder = profilesDir;
-      } else if (file.fieldname === 'image' || file.fieldname === 'referenceImage') {
+      } else if (file.fieldname === 'image') {
         destFolder = artworksDir;
+      } else if (file.fieldname === 'referenceImage') {
+        destFolder = commissionsDir;
       } else if (file.fieldname === 'bannerImage') {
         destFolder = exhibitionsDir;
       }
