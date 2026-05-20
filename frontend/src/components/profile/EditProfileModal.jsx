@@ -135,8 +135,8 @@ export default function EditProfileModal({ isOpen, onClose, currentArtist }) {
         username: data.username,
         profileImage: data.profileImage
       });
-      queryClient.invalidateQueries(['admin-artists-list']);
-      queryClient.invalidateQueries(['artists']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artists-list'] });
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
       onClose();
     },
     onError: (err) => {

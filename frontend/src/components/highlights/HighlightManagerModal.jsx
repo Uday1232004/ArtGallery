@@ -43,8 +43,8 @@ export default function HighlightManagerModal({ isOpen, onClose, currentArtist, 
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artists-list']);
-      queryClient.invalidateQueries(['artists']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artists-list'] });
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
       onClose();
     },
     onError: (err) => {
@@ -58,8 +58,8 @@ export default function HighlightManagerModal({ isOpen, onClose, currentArtist, 
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artists-list']);
-      queryClient.invalidateQueries(['artists']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artists-list'] });
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
       onClose();
     },
     onError: (err) => {
@@ -72,8 +72,8 @@ export default function HighlightManagerModal({ isOpen, onClose, currentArtist, 
       await api.delete(`/highlights/${editHighlight.id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artists-list']);
-      queryClient.invalidateQueries(['artists']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artists-list'] });
+      queryClient.invalidateQueries({ queryKey: ['artists'] });
       onClose();
     },
     onError: (err) => {

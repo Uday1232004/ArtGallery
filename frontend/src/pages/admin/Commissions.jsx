@@ -33,8 +33,8 @@ export default function Commissions() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['admin-commissions']);
-      queryClient.invalidateQueries(['dashboard-analytics']);
+      queryClient.invalidateQueries({ queryKey: ['admin-commissions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
       setSelectedInquiry(data);
       setShowApproveModal(false);
       setNegotiatedPrice('');

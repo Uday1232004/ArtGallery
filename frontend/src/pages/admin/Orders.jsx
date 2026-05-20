@@ -20,7 +20,7 @@ export default function Orders() {
       await api.put(`/orders/${id}/status`, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders']);
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
     }
   });
 

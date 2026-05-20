@@ -106,8 +106,8 @@ export default function Exhibitions() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-exhibitions']);
-      queryClient.invalidateQueries(['exhibitions']); // refresh public exhibitions query as well
+      queryClient.invalidateQueries({ queryKey: ['admin-exhibitions'] });
+      queryClient.invalidateQueries({ queryKey: ['exhibitions'] }); // refresh public exhibitions query as well
       setIsModalOpen(false);
       resetForm();
     },
@@ -123,8 +123,8 @@ export default function Exhibitions() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-exhibitions']);
-      queryClient.invalidateQueries(['exhibitions']);
+      queryClient.invalidateQueries({ queryKey: ['admin-exhibitions'] });
+      queryClient.invalidateQueries({ queryKey: ['exhibitions'] });
       setIsModalOpen(false);
       resetForm();
     },
@@ -140,8 +140,8 @@ export default function Exhibitions() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-exhibitions']);
-      queryClient.invalidateQueries(['exhibitions']);
+      queryClient.invalidateQueries({ queryKey: ['admin-exhibitions'] });
+      queryClient.invalidateQueries({ queryKey: ['exhibitions'] });
     }
   });
 

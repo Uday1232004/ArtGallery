@@ -201,9 +201,9 @@ export default function Artworks() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artworks']);
-      queryClient.invalidateQueries(['artworks']);
-      queryClient.invalidateQueries(['dashboard-analytics']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
       setIsModalOpen(false);
       resetForm();
     },
@@ -219,8 +219,8 @@ export default function Artworks() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artworks']);
-      queryClient.invalidateQueries(['artworks']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['artworks'] });
       setIsModalOpen(false);
       resetForm();
     },
@@ -236,9 +236,9 @@ export default function Artworks() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-artworks']);
-      queryClient.invalidateQueries(['artworks']);
-      queryClient.invalidateQueries(['dashboard-analytics']);
+      queryClient.invalidateQueries({ queryKey: ['admin-artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
     }
   });
 
