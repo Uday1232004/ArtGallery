@@ -39,9 +39,7 @@ export default function HighlightManagerModal({ isOpen, onClose, currentArtist, 
 
   const createHighlightMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.post('/highlights', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.post('/highlights', formData);
       return data;
     },
     onSuccess: () => {
@@ -56,9 +54,7 @@ export default function HighlightManagerModal({ isOpen, onClose, currentArtist, 
 
   const updateHighlightMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.put(`/highlights/${editHighlight.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.put(`/highlights/${editHighlight.id}`, formData);
       return data;
     },
     onSuccess: () => {

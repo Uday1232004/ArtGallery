@@ -197,9 +197,7 @@ export default function Artworks() {
   // Create Mutation
   const createMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.post('/artworks', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.post('/artworks', formData);
       return data;
     },
     onSuccess: () => {
@@ -217,9 +215,7 @@ export default function Artworks() {
   // Update Mutation
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.put(`/artworks/${editingArtwork.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.put(`/artworks/${editingArtwork.id}`, formData);
       return data;
     },
     onSuccess: () => {

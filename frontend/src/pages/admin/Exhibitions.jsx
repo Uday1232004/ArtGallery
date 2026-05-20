@@ -102,9 +102,7 @@ export default function Exhibitions() {
   // Create Mutation
   const createMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.post('/exhibitions', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.post('/exhibitions', formData);
       return data;
     },
     onSuccess: () => {
@@ -121,9 +119,7 @@ export default function Exhibitions() {
   // Edit/Update Mutation
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.put(`/exhibitions/${editingExhibition.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.put(`/exhibitions/${editingExhibition.id}`, formData);
       return data;
     },
     onSuccess: () => {

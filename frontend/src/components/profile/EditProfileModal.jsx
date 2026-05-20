@@ -125,9 +125,7 @@ export default function EditProfileModal({ isOpen, onClose, currentArtist }) {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (formData) => {
-      const { data } = await api.put(`/artists/${currentArtist.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await api.put(`/artists/${currentArtist.id}`, formData);
       return data; // Returns updated artist
     },
     onSuccess: (data) => {
