@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { resolveImageUrl } from '../../lib/axios';
-import { Mail, Clock, CheckCircle, XCircle, FileText, Calendar, DollarSign, ShieldAlert } from 'lucide-react';
+import { Mail, Clock, CheckCircle, XCircle, FileText, Calendar, DollarSign, ShieldAlert, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
@@ -13,6 +13,12 @@ export default function Commissions() {
   const [negotiatedPrice, setNegotiatedPrice] = useState('');
   const [negotiatedDeadline, setNegotiatedDeadline] = useState('');
 
+  // Status & Notes Modal States
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [targetStatus, setTargetStatus] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
   // Fetch all commissions
   const { data: commissions = [], isLoading, isError } = useQuery({
     queryKey: ['admin-commissions'],
@@ -22,13 +28,14 @@ export default function Commissions() {
     }
   });
 
-  // Mutation to update status
+  // Mutation to update status and notes
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, finalPrice, submissionDate }) => {
+    mutationFn: async ({ id, status, finalPrice, submissionDate, adminNotes }) => {
       const { data } = await api.put(`/commissions/${id}/status`, { 
         status, 
         finalPrice, 
-        submissionDate 
+        submissionDate,
+        adminNotes
       });
       return data;
     },
@@ -37,16 +44,21 @@ export default function Commissions() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
       setSelectedInquiry(data);
       setShowApproveModal(false);
+      setShowStatusModal(false);
       setNegotiatedPrice('');
       setNegotiatedDeadline('');
+      setAdminNotes('');
     }
   });
 
   const handleStatusChange = (id, status) => {
     if (status === 'APPROVED') {
       setShowApproveModal(true);
+      setAdminNotes(selectedInquiry?.adminNotes || '');
     } else {
-      updateStatusMutation.mutate({ id, status });
+      setTargetStatus(status);
+      setAdminNotes(selectedInquiry?.adminNotes || '');
+      setShowStatusModal(true);
     }
   };
 
@@ -60,7 +72,17 @@ export default function Commissions() {
       id: selectedInquiry.id,
       status: 'APPROVED',
       finalPrice: parseFloat(negotiatedPrice),
-      submissionDate: negotiatedDeadline
+      submissionDate: negotiatedDeadline,
+      adminNotes: adminNotes
+    });
+  };
+
+  const handleStatusSubmit = (e) => {
+    e.preventDefault();
+    updateStatusMutation.mutate({
+      id: selectedInquiry.id,
+      status: targetStatus,
+      adminNotes: adminNotes
     });
   };
 
@@ -79,7 +101,12 @@ export default function Commissions() {
 
   const pendingCount = commissions.filter(c => c.status === 'PENDING').length;
   const approvedCount = commissions.filter(c => c.status === 'APPROVED').length;
+  const inProgressCount = commissions.filter(c => c.status === 'IN_PROGRESS').length;
   const completedCount = commissions.filter(c => c.status === 'COMPLETED').length;
+
+  const filteredCommissions = statusFilter === 'ALL'
+    ? commissions
+    : commissions.filter(c => c.status === statusFilter);
 
   return (
     <div className="flex flex-col gap-10">
@@ -91,18 +118,22 @@ export default function Commissions() {
       </header>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
           <p className="font-sans text-[10px] tracking-wider text-mist/60 uppercase mb-2">Total Received</p>
           <h3 className="font-serif text-3xl text-cream">{commissions.length}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
-          <p className="font-sans text-[10px] tracking-wider text-gold/60 uppercase mb-2">Pending Requests</p>
+          <p className="font-sans text-[10px] tracking-wider text-gold/60 uppercase mb-2">Pending</p>
           <h3 className="font-serif text-3xl text-gold">{pendingCount}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
-          <p className="font-sans text-[10px] tracking-wider text-green-400/60 uppercase mb-2">Approved & Negotiating</p>
+          <p className="font-sans text-[10px] tracking-wider text-green-400/60 uppercase mb-2">Approved</p>
           <h3 className="font-serif text-3xl text-green-400">{approvedCount}</h3>
+        </div>
+        <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
+          <p className="font-sans text-[10px] tracking-wider text-amber-400/60 uppercase mb-2">In Progress</p>
+          <h3 className="font-serif text-3xl text-amber-400">{inProgressCount}</h3>
         </div>
         <div className="bg-carbon/40 border border-white/5 p-6 rounded-lg">
           <p className="font-sans text-[10px] tracking-wider text-blue-400/60 uppercase mb-2">Completed</p>
@@ -113,14 +144,31 @@ export default function Commissions() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Inquiries List */}
         <div className="lg:col-span-7 bg-carbon/20 border border-white/5 rounded-lg overflow-hidden">
-          <div className="p-6 border-b border-white/5 bg-carbon/40">
+          <div className="p-6 border-b border-white/5 bg-carbon/40 flex flex-col gap-4">
             <h2 className="font-serif text-lg text-cream">Incoming Messages</h2>
+            
+            {/* Filter buttons */}
+            <div className="flex flex-wrap gap-2">
+              {['ALL', 'PENDING', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'REFUNDED'].map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setStatusFilter(filter)}
+                  className={`px-3 py-1.5 text-[9px] uppercase tracking-wider transition-all duration-300 font-sans border ${
+                    statusFilter === filter
+                      ? 'bg-gold border-gold text-void font-bold'
+                      : 'bg-void/50 text-mist/60 hover:text-cream border-white/10'
+                  }`}
+                >
+                  {filter === 'IN_PROGRESS' ? 'In Progress' : filter}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
-            {commissions.length === 0 ? (
-              <div className="p-12 text-center text-mist/40 font-sans">No commissions or inquiries registered yet.</div>
+            {filteredCommissions.length === 0 ? (
+              <div className="p-12 text-center text-mist/40 font-sans">No commissions matching filter found.</div>
             ) : (
-              commissions.map((comm) => (
+              filteredCommissions.map((comm) => (
                 <button
                   key={comm.id}
                   onClick={() => setSelectedInquiry(comm)}
@@ -134,10 +182,11 @@ export default function Commissions() {
                       <span className={`px-2 py-0.5 text-[8px] uppercase tracking-wider rounded-sm ${
                         comm.status === 'PENDING' ? 'bg-gold/20 text-gold' :
                         comm.status === 'APPROVED' ? 'bg-green-500/20 text-green-400' :
+                        comm.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400' :
                         comm.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
                         'bg-red-500/20 text-red-400'
                       }`}>
-                        {comm.status}
+                        {comm.status === 'IN_PROGRESS' ? 'In Progress' : comm.status}
                       </span>
                     </div>
                     <p className="font-sans text-xs text-mist/60 mb-2">Subject: {comm.artworkType}</p>
@@ -206,6 +255,16 @@ export default function Commissions() {
                   </div>
                 )}
 
+                {/* Display current admin notes if they exist */}
+                <div className="bg-white/[0.02] border border-white/5 p-4 rounded text-xs font-sans space-y-2">
+                  <p className="text-mist/50 uppercase tracking-wider text-[9px] font-semibold">Artist / Admin Notes to Client</p>
+                  {selectedInquiry.adminNotes ? (
+                    <p className="text-ivory whitespace-pre-wrap">{selectedInquiry.adminNotes}</p>
+                  ) : (
+                    <p className="text-mist/40 italic">No notes provided yet.</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 text-xs font-sans">
                   <div className="bg-white/[0.02] border border-white/5 p-3 rounded">
                     <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-1">Subject</p>
@@ -237,43 +296,106 @@ export default function Commissions() {
                   </div>
                 )}
 
+                {/* Direct Notes Update Input */}
+                <div className="border-t border-white/5 pt-4">
+                  <label className="block font-sans text-[10px] tracking-wider text-mist/50 uppercase mb-2">Quick Update Artist Notes</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      placeholder="e.g. Need better reference image..."
+                      defaultValue={selectedInquiry.adminNotes || ''}
+                      id={`notes-input-${selectedInquiry.id}`}
+                      className="flex-1 bg-void/50 border border-white/10 px-3 py-2 font-sans text-xs text-ivory focus:outline-none focus:border-gold"
+                    />
+                    <button
+                      onClick={() => {
+                        const noteVal = document.getElementById(`notes-input-${selectedInquiry.id}`)?.value || '';
+                        updateStatusMutation.mutate({
+                          id: selectedInquiry.id,
+                          status: selectedInquiry.status,
+                          adminNotes: noteVal
+                        });
+                      }}
+                      className="px-4 py-2 bg-gold text-void font-sans text-[9px] uppercase tracking-wider font-bold transition-all duration-300"
+                    >
+                      Save Note
+                    </button>
+                  </div>
+                </div>
+
                 <div className="border-t border-white/5 pt-6 flex flex-col gap-3">
-                  <p className="font-sans text-[10px] tracking-wider text-mist/50 uppercase">Update Inquiry Action</p>
+                  <p className="font-sans text-[10px] tracking-wider text-mist/50 uppercase">Update Inquiry Status</p>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => handleStatusChange(selectedInquiry.id, 'APPROVED')}
-                      disabled={selectedInquiry.status === 'APPROVED'}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 ${
-                        selectedInquiry.status === 'APPROVED'
-                          ? 'bg-green-500/20 text-green-400 border-green-500/30 cursor-not-allowed'
-                          : 'bg-transparent text-mist/70 border-white/10 hover:text-green-400 hover:border-green-500/30 hover:bg-green-500/[0.02]'
-                      }`}
-                    >
-                      <CheckCircle size={14} />
-                      Approve & Price
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(selectedInquiry.id, 'COMPLETED')}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 ${
-                        selectedInquiry.status === 'COMPLETED'
-                          ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                          : 'bg-transparent text-mist/70 border-white/10 hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-500/[0.02]'
-                      }`}
-                    >
-                      <Clock size={14} />
-                      Complete
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(selectedInquiry.id, 'REJECTED')}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 ${
-                        selectedInquiry.status === 'REJECTED'
-                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                          : 'bg-transparent text-mist/70 border-white/10 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.02]'
-                      }`}
-                    >
-                      <XCircle size={14} />
-                      Reject & Refund
-                    </button>
+                    {selectedInquiry.status === 'PENDING' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'APPROVED')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-green-400 hover:border-green-500/30 hover:bg-green-500/[0.02]"
+                        >
+                          <CheckCircle size={14} />
+                          Approve & Price
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'REJECTED')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.02]"
+                        >
+                          <XCircle size={14} />
+                          Reject Request
+                        </button>
+                      </>
+                    )}
+
+                    {selectedInquiry.status === 'APPROVED' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'IN_PROGRESS')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-amber-400 hover:border-amber-500/30 hover:bg-amber-500/[0.02]"
+                        >
+                          <Clock size={14} />
+                          Start Work
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'REJECTED')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.02]"
+                        >
+                          <XCircle size={14} />
+                          Reject & Refund
+                        </button>
+                      </>
+                    )}
+
+                    {selectedInquiry.status === 'IN_PROGRESS' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'COMPLETED')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-500/[0.02]"
+                        >
+                          <CheckCircle size={14} />
+                          Mark Completed
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(selectedInquiry.id, 'REJECTED')}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.02]"
+                        >
+                          <XCircle size={14} />
+                          Reject & Refund
+                        </button>
+                      </>
+                    )}
+
+                    {selectedInquiry.status === 'REJECTED' && (
+                      <button
+                        onClick={() => handleStatusChange(selectedInquiry.id, 'REFUNDED')}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-sans uppercase tracking-widest border transition-all duration-300 bg-transparent text-mist/70 border-white/10 hover:text-gold hover:border-gold/30 hover:bg-gold/[0.02]"
+                      >
+                        <XCircle size={14} />
+                        Confirm Refunded
+                      </button>
+                    )}
+
+                    {(selectedInquiry.status === 'COMPLETED' || selectedInquiry.status === 'REFUNDED') && (
+                      <p className="font-sans text-[10px] text-mist/40 italic text-center w-full">This commission status is finalized ({selectedInquiry.status}).</p>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -321,6 +443,16 @@ export default function Commissions() {
                 />
               </div>
 
+              <div className="group">
+                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Artist Notes / Client Updates</label>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="e.g. Terms approved. Beginning preparation..."
+                  className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400 resize-none h-20"
+                />
+              </div>
+
               <div className="flex gap-4 mt-2">
                 <button
                   type="button"
@@ -335,6 +467,45 @@ export default function Commissions() {
                   className="flex-1 py-3 bg-gold text-void font-sans text-[10px] tracking-widest uppercase font-semibold hover:bg-gold/80 transition-all duration-300"
                 >
                   Confirm Approve
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* OTHER STATUS TRANSITIONS MODAL */}
+      {showStatusModal && selectedInquiry && (
+        <div className="fixed inset-0 bg-void/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-carbon border border-white/10 p-8 max-w-md w-full shadow-2xl relative">
+            <h3 className="font-serif text-2xl text-cream mb-2">Transition Status</h3>
+            <p className="font-sans text-xs text-mist/60 mb-6">Transitioning status to: <strong className="text-gold">{targetStatus}</strong></p>
+
+            <form onSubmit={handleStatusSubmit} className="flex flex-col gap-6">
+              <div className="group">
+                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Update Artist Notes (Optional)</label>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Add notes, shipped tracking codes, or change request info..."
+                  className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400 resize-none h-32"
+                />
+              </div>
+
+              <div className="flex gap-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowStatusModal(false)}
+                  className="flex-1 py-3 border border-white/10 hover:bg-white/5 font-sans text-[10px] tracking-widest text-cream uppercase transition-all duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateStatusMutation.isLoading}
+                  className="flex-1 py-3 bg-gold text-void font-sans text-[10px] tracking-widest uppercase font-semibold hover:bg-gold/80 transition-all duration-300"
+                >
+                  Confirm Transition
                 </button>
               </div>
             </form>

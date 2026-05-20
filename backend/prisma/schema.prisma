@@ -292,6 +292,7 @@ model Commission {
   message         String           @db.Text
   referenceImage  String?
   status          CommissionStatus @default(PENDING)
+  adminNotes      String?          @db.Text
   
   shippingAddress String
   shippingCity    String
@@ -310,13 +311,16 @@ model Commission {
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  completedAt     DateTime?
 }
 
 enum CommissionStatus {
   PENDING
   APPROVED
+  IN_PROGRESS
   COMPLETED
   REJECTED
+  REFUNDED
 }
 
 // ─────────────────────────────────────────────

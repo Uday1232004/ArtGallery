@@ -25,6 +25,8 @@ import { useAuthStore } from './store/authStore'
 import { useCartStore } from './store/cartStore'
 import RequestCommission from './pages/RequestCommission'
 import ArtistProfile from './pages/ArtistProfile'
+import CommissionDetail from './pages/CommissionDetail'
+import ToastContainer from './components/Toast'
 import { getLenis } from './animations/lenis'
 
 // Protected Route Component
@@ -83,6 +85,7 @@ export default function App() {
     <div className="noise-overlay min-h-screen bg-void text-mist">
       <Cursor />
       <CartSidebar />
+      <ToastContainer />
       
       {!isAdminOrLogin && <Navbar />}
       
@@ -99,6 +102,7 @@ export default function App() {
         <Route path="/artists" element={<Artists />} />
         <Route path="/artists/:id" element={<ArtistProfile />} />
         <Route path="/commissions/request" element={<ProtectedRoute><RequestCommission /></ProtectedRoute>} />
+        <Route path="/commissions/:id" element={<ProtectedRoute><CommissionDetail /></ProtectedRoute>} />
         <Route path="/exhibitions" element={<Exhibitions />} />
         <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminLayout /></ProtectedRoute>}>
           <Route index element={<AdminDashboard />} />

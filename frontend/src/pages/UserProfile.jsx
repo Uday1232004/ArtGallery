@@ -8,6 +8,7 @@ import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag } f
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
 import { gsap } from '../animations/gsap';
+import { useToastStore } from '../store/toastStore';
 
 export default function UserProfile() {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -56,6 +57,25 @@ export default function UserProfile() {
     try {
       const res = await api.get('/commissions');
       setCommissions(res.data);
+
+      // Detect status changes for notifications
+      const savedStatuses = localStorage.getItem('commission_statuses');
+      const statusMap = savedStatuses ? JSON.parse(savedStatuses) : {};
+      let updated = false;
+
+      res.data.forEach((comm) => {
+        const prevStatus = statusMap[comm.id];
+        if (prevStatus && prevStatus !== comm.status) {
+          const { addToast } = useToastStore.getState();
+          addToast(`Your commission request "${comm.artworkType}" has been updated to ${comm.status}!`, 'info');
+        }
+        statusMap[comm.id] = comm.status;
+        updated = true;
+      });
+
+      if (updated) {
+        localStorage.setItem('commission_statuses', JSON.stringify(statusMap));
+      }
     } catch (err) {
       console.error('Failed to load commissions', err);
     } finally {
@@ -240,14 +260,14 @@ export default function UserProfile() {
                           {/* Status & Purchase Action Button */}
                           <div className="flex flex-col justify-between items-end text-right min-w-[150px] gap-4">
                             <div>
-                              <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1 text-[9px]">Status</p>
                               <span className={`px-2 py-0.5 text-[8px] uppercase tracking-wider font-semibold rounded-sm ${
                                 comm.status === 'PENDING' ? 'bg-gold/20 text-gold' :
                                 comm.status === 'APPROVED' ? 'bg-green-500/20 text-green-400' :
+                                comm.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400' :
                                 comm.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
                                 'bg-red-500/20 text-red-400'
                               }`}>
-                                {comm.status}
+                                {comm.status === 'IN_PROGRESS' ? 'In Progress' : comm.status}
                               </span>
                             </div>
 
@@ -269,7 +289,7 @@ export default function UserProfile() {
                               </div>
                             )}
 
-                            {comm.status === 'REJECTED' && (
+                            {(comm.status === 'REJECTED' || comm.status === 'REFUNDED') && (
                               <div className="text-right">
                                 <p className="font-sans text-[9px] text-red-400/80 bg-red-950/20 px-2 py-1 border border-red-500/10 rounded">
                                   Refunded: ${comm.advanceAmount || '100.00'}
@@ -280,9 +300,23 @@ export default function UserProfile() {
                             {comm.status === 'PENDING' && (
                               <div>
                                 <p className="font-sans text-[9px] text-mist/50 mb-0.5">Advance Deposit</p>
-                                <p className="font-sans text-xs text-green-400">Paid: ${comm.advanceAmount}</p>
+                                <p className="font-sans text-xs text-green-400 font-semibold">Paid: ${comm.advanceAmount}</p>
                               </div>
                             )}
+
+                            {comm.status === 'IN_PROGRESS' && (
+                              <div>
+                                <p className="font-sans text-[9px] text-mist/55 mb-0.5">Creation Stage</p>
+                                <p className="font-sans text-xs text-amber-400 font-semibold">Sketching...</p>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => navigate(`/commissions/${comm.id}`)}
+                              className="mt-2 text-center text-gold hover:text-cream font-sans text-[9px] tracking-wider uppercase underline font-semibold transition-colors"
+                            >
+                              Track Details & Timeline →
+                            </button>
                           </div>
 
                         </div>

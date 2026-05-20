@@ -115,7 +115,7 @@ const getCommissions = async (req, res) => {
 // @access  Private (Admin or Artist)
 const updateCommissionStatus = async (req, res) => {
   try {
-    const { status, finalPrice, submissionDate } = req.body;
+    const { status, finalPrice, submissionDate, adminNotes } = req.body;
     
     const existingCommission = await prisma.commission.findUnique({
       where: { id: req.params.id }
@@ -126,6 +126,14 @@ const updateCommissionStatus = async (req, res) => {
     }
 
     let updateData = { status };
+
+    if (adminNotes !== undefined) {
+      updateData.adminNotes = adminNotes;
+    }
+
+    if (status === 'COMPLETED') {
+      updateData.completedAt = new Date();
+    }
 
     if (status === 'APPROVED') {
       if (!finalPrice || !submissionDate) {
@@ -159,7 +167,7 @@ const updateCommissionStatus = async (req, res) => {
           data: { price: parseFloat(finalPrice) }
         });
       }
-    } else if (status === 'REJECTED') {
+    } else if (status === 'REJECTED' || status === 'REFUNDED') {
       // Simulate refundable logic by marking advance payment refunded
       updateData.paymentStatus = 'REFUNDED';
     }
