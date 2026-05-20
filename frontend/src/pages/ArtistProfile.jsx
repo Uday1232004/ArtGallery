@@ -117,6 +117,7 @@ export default function ArtistProfile() {
                 src={resolveImageUrl(artist.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'}
                 alt={artist.name}
                 className="w-full h-full object-cover rounded-full"
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'; }}
               />
             </div>
           </div>
@@ -235,6 +236,7 @@ export default function ArtistProfile() {
                         src={resolveImageUrl(artwork.image)}
                         alt={artwork.title}
                         className="w-full h-full object-cover filter brightness-95 group-hover:scale-102 transition-transform duration-500"
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80'; }}
                       />
                       {/* Premium IG Stat Overlay on Hover */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-6">

@@ -32,13 +32,29 @@ if (isCloudinaryConfigured) {
   console.log('Using Cloudinary storage configuration.');
 } else {
   const uploadDir = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  const profilesDir = path.join(uploadDir, 'profiles');
+  const artworksDir = path.join(uploadDir, 'artworks');
+  const exhibitionsDir = path.join(uploadDir, 'exhibitions');
+  const seedingDir = path.join(uploadDir, 'seeding');
+
+  // Ensure all directories exist
+  [uploadDir, profilesDir, artworksDir, exhibitionsDir, seedingDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
 
   storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, uploadDir);
+      let destFolder = uploadDir;
+      if (file.fieldname === 'profileImage' || file.fieldname === 'avatar') {
+        destFolder = profilesDir;
+      } else if (file.fieldname === 'image' || file.fieldname === 'referenceImage') {
+        destFolder = artworksDir;
+      } else if (file.fieldname === 'bannerImage') {
+        destFolder = exhibitionsDir;
+      }
+      cb(null, destFolder);
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);

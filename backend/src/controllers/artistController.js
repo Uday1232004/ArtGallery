@@ -90,7 +90,7 @@ const createArtist = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         profileImage = req.file.path;
       } else {
-        profileImage = `/uploads/${path.basename(req.file.path)}`;
+        profileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
       }
     }
 
@@ -134,7 +134,7 @@ const updateArtist = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         profileImage = req.file.path;
       } else {
-        profileImage = `/uploads/${path.basename(req.file.path)}`;
+        profileImage = `/uploads/profiles/${path.basename(req.file.path)}`;
       }
     } else if (req.body.removeImage === 'true') {
       profileImage = null;

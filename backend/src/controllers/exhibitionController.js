@@ -56,7 +56,7 @@ const createExhibition = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         bannerImage = req.file.path;
       } else {
-        bannerImage = `/uploads/${path.basename(req.file.path)}`;
+        bannerImage = `/uploads/exhibitions/${path.basename(req.file.path)}`;
       }
     }
 
@@ -110,7 +110,7 @@ const updateExhibition = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         bannerImage = req.file.path;
       } else {
-        bannerImage = `/uploads/${path.basename(req.file.path)}`;
+        bannerImage = `/uploads/exhibitions/${path.basename(req.file.path)}`;
       }
     }
 

@@ -92,7 +92,7 @@ const createArtwork = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         image = req.file.path;
       } else {
-        image = `/uploads/${path.basename(req.file.path)}`;
+        image = `/uploads/artworks/${path.basename(req.file.path)}`;
       }
     }
 
@@ -180,7 +180,7 @@ const updateArtwork = async (req, res) => {
       if (req.file.path.startsWith('http://') || req.file.path.startsWith('https://')) {
         image = req.file.path;
       } else {
-        image = `/uploads/${path.basename(req.file.path)}`;
+        image = `/uploads/artworks/${path.basename(req.file.path)}`;
       }
     }
 

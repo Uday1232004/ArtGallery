@@ -99,6 +99,7 @@ export default function ArtworkDetail() {
                   src={resolveImageUrl(artwork.image)} 
                   alt={artwork.title} 
                   className="w-full h-auto object-cover shadow-2xl img-cinematic sepia-[0.1]"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&q=80'; }}
                 />
               </div>
             </div>

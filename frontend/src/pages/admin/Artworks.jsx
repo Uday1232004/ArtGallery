@@ -314,6 +314,7 @@ export default function Artworks() {
               src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'}
               alt=""
               className="w-full h-full object-cover rounded-full"
+              onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'; }}
             />
           </div>
         </div>
@@ -454,6 +455,7 @@ export default function Artworks() {
                       src={resolveImageUrl(artwork.image)}
                       alt={artwork.title}
                       className="w-full h-full object-cover filter brightness-95 group-hover:scale-102 transition-transform duration-500"
+                      onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80'; }}
                     />
                     
                     {/* Hover Admin Actions & stats */}
@@ -514,7 +516,7 @@ export default function Artworks() {
                       <tr key={art.id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="p-5">
                           <div className="w-11 h-11 rounded bg-zinc-950 overflow-hidden border border-white/5">
-                            <img src={resolveImageUrl(art.image)} alt="" className="w-full h-full object-cover" />
+                            <img src={resolveImageUrl(art.image)} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&q=80'; }} />
                           </div>
                         </td>
                         <td className="p-5 font-serif text-cream text-base">{art.title}</td>
@@ -619,6 +621,7 @@ export default function Artworks() {
                         src={resolveImageUrl(previewUrl)} 
                         alt="Canvas Preview" 
                         className="w-full h-full object-cover"
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80'; }}
                       />
                     ) : (
                       <div className="flex flex-col items-center gap-3 text-mist/30 text-center p-6 font-sans">
@@ -657,6 +660,7 @@ export default function Artworks() {
                           src={resolveImageUrl(currentArtist?.profileImage) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'} 
                           alt="" 
                           className="w-full h-full object-cover" 
+                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'; }}
                         />
                       </div>
                       <div className="flex flex-col">
