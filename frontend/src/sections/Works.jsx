@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Layers, CheckCircle, Mail, DollarSign, Award, HelpCircle, Heart } from 'lucide-react'
+import { X, Calendar, Layers, DollarSign, Award, Heart } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { gsap, ScrollTrigger } from '../animations/gsap'
 import api, { resolveImageUrl } from '../lib/axios'
@@ -10,117 +10,6 @@ import { useWishlistStore } from '../store/wishlistStore'
 import { useAuthStore } from '../store/authStore'
 
 const CATEGORIES = ['All', 'Portraits', 'Pen Art', 'Paintings', 'Krishna', 'Experimental']
-
-const FALLBACK_WORKS = [
-  { 
-    title: 'The Gaze', 
-    category: 'Portraits', 
-    medium: 'Graphite on Paper', 
-    size: 'tall', 
-    image: 'https://images.unsplash.com/photo-1544502062-f82887f03d1c?w=600&q=80',
-    dimensions: '18" x 24"',
-    yearCreated: 2025,
-    status: 'AVAILABLE',
-    price: 850,
-    description: 'An exploration of silence, focus, and quiet intensity. "The Gaze" is a detailed study of eyes that have witnessed both structure and creation. Drawn entirely with fine-grade graphite, this piece spent over 60 hours in development to capture the micro-textures of skin and the warm, cinematic reflection in the iris.'
-  },
-  { 
-    title: 'Divine Flute', 
-    category: 'Krishna', 
-    medium: 'Charcoal & Gold Leaf', 
-    size: 'medium', 
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&q=80',
-    dimensions: '16" x 20"',
-    yearCreated: 2026,
-    status: 'AVAILABLE',
-    price: 1200,
-    description: 'Capturing the celestial and serene presence of Krishna. High-contrast charcoal creates deep, velvety shadows, while delicate 24k gold leaf details represent the divine light radiating from within. An atmospheric, emotional masterpiece designed to bring peace and deep spirituality.'
-  },
-  { 
-    title: 'Fractured', 
-    category: 'Experimental', 
-    medium: 'Mixed Media', 
-    size: 'short', 
-    image: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&q=80',
-    dimensions: '12" x 12"',
-    yearCreated: 2025,
-    status: 'SOLD',
-    price: 600,
-    description: 'A visual translation of the analytical engineering brain colliding with the chaotic flow of pure expression. Combining ink washes, scrapings, and fine pencil lines, "Fractured" represents the moment logic breaks down and reveals the raw emotion underneath.'
-  },
-  { 
-    title: 'Old Soul', 
-    category: 'Portraits', 
-    medium: 'Pencil Sketch', 
-    size: 'tall', 
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-    dimensions: '14" x 18"',
-    yearCreated: 2024,
-    status: 'SOLD',
-    price: 750,
-    description: 'A tribute to the layers of history, wisdom, and life stories written in the lines of an elderly face. This hyper-realistic drawing pushes the boundaries of texture replication using charcoal, graphite, and blending stumps to breathe authentic life into paper.'
-  },
-  { 
-    title: 'Ink Flow I', 
-    category: 'Pen Art', 
-    medium: 'Fineliner', 
-    size: 'medium', 
-    image: 'https://images.unsplash.com/photo-1515405295579-ba7b45403062?w=600&q=80',
-    dimensions: '10" x 14"',
-    yearCreated: 2025,
-    status: 'AVAILABLE',
-    price: 450,
-    description: 'An intricate map of geometric flows and fine detailing. Created entirely with a 0.05mm technical drawing pen, this piece captures the natural patterns found in tree rings, river currents, and neural maps, demonstrating meticulous precision.'
-  },
-  { 
-    title: 'Radha Krishna', 
-    category: 'Krishna', 
-    medium: 'Graphite', 
-    size: 'tall', 
-    image: 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=600&q=80',
-    dimensions: '20" x 30"',
-    yearCreated: 2026,
-    status: 'AVAILABLE',
-    price: 1500,
-    description: 'A representation of eternal love and spiritual connection. Drawn with a rich spectrum of graphite grades from 2H to 10B to construct extreme contrast and deep dimensionality. Captures a calm, serene moment of companionship between Radha and Krishna.'
-  },
-  { 
-    title: 'Micro Details', 
-    category: 'Pen Art', 
-    medium: 'Micron Pen', 
-    size: 'short', 
-    image: 'https://images.unsplash.com/photo-1583344665471-bd1f52d5b6e2?w=600&q=80',
-    dimensions: '12" x 16"',
-    yearCreated: 2025,
-    status: 'SOLD',
-    price: 550,
-    description: 'Pushing the limits of fine-line pen work. Exploring micro-textures and shading through cross-hatching and stippling techniques. A highly organic study reflecting thousands of individual pen strokes.'
-  },
-  { 
-    title: 'Emotion State', 
-    category: 'Experimental', 
-    medium: 'Charcoal Wash', 
-    size: 'medium', 
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80',
-    dimensions: '18" x 24"',
-    yearCreated: 2025,
-    status: 'AVAILABLE',
-    price: 950,
-    description: 'Capturing abstract sorrow and inner beauty. Applying dynamic charcoal washes on wet heavy-duty art paper to generate fluid, smoky edges that mimic the atmospheric cinematography of classic emotional films.'
-  },
-  { 
-    title: 'Brother', 
-    category: 'Portraits', 
-    medium: 'Pencil', 
-    size: 'tall', 
-    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80',
-    dimensions: '16" x 20"',
-    yearCreated: 2024,
-    status: 'SOLD',
-    price: 800,
-    description: 'A study of boyhood, trust, and growing up. Drawn from life, focusing on realistic hair textures and soft shadow values to invoke nostalgia and close emotional warmth.'
-  },
-]
 
 const heightMap = { tall: 'h-80 md:h-[28rem]', medium: 'h-60 md:h-[22rem]', short: 'h-48 md:h-[16rem]' }
 
@@ -152,7 +41,7 @@ export default function Works() {
   const { toggleWishlist, isWishlisted } = useWishlistStore()
 
   // Fetch live artworks from backend
-  const { data: serverWorks } = useQuery({
+  const { data: serverWorks, isLoading: worksLoading } = useQuery({
     queryKey: ['artworks'],
     queryFn: async () => {
       const res = await api.get('/artworks')
@@ -161,8 +50,7 @@ export default function Works() {
     retry: false,
   })
 
-  // Map server works or fallback to mock
-  const rawWorks = serverWorks && serverWorks.length > 0 ? serverWorks : FALLBACK_WORKS
+  const rawWorks = serverWorks || []
   const sizes = ['tall', 'medium', 'short']
   
   const works = rawWorks.map((w, idx) => ({
@@ -329,14 +217,27 @@ export default function Works() {
           <div className="relative masonry-wrapper pb-10">
 
             <div className="masonry-grid relative z-10">
+            {!serverWorks && Array.from({length: 6}).map((_, i) => (
+              <div key={i} className="masonry-item work-card animate-pulse bg-white/5 rounded-sm" style={{height: i % 3 === 0 ? '28rem' : i % 3 === 1 ? '22rem' : '16rem'}} />
+            ))}
+
+            {serverWorks && filteredWorks.length === 0 && (
+              <div className="py-32 flex flex-col items-center gap-6 text-center">
+                <div className="w-16 h-px bg-gold/30 mx-auto" />
+                <p className="font-serif text-3xl text-mist/60 font-light">No artworks yet.</p>
+                <p className="font-sans text-xs tracking-[0.2em] text-mist/40 uppercase max-w-xs">
+                  Be the first to upload your work and share it with the world.
+                </p>
+                <Link to="/admin/artworks" className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400">
+                  Upload Artwork
+                </Link>
+              </div>
+            )}
+
             {filteredWorks.map((work, i) => (
             <div 
               key={`${work.title}-${i}`} 
-              onClick={() => {
-                setSelectedArtwork(work)
-                setSuccess(false)
-                setError('')
-              }}
+              onClick={() => setSelectedArtwork(work)}
               className="masonry-item work-card group relative overflow-hidden rounded-sm cursor-none will-change-transform" 
               data-cursor-hover
             >

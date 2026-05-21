@@ -77,12 +77,7 @@ const getCommissions = async (req, res) => {
     // Filter based on roles
     if (req.user.role === 'ARTIST') {
       const artistProfile = await prisma.artist.findFirst({
-        where: {
-          OR: [
-            { user: { id: req.user.id } },
-            { name: req.user.name }
-          ]
-        }
+        where: { user: { id: req.user.id } }
       });
 
       if (artistProfile) {

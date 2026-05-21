@@ -4,10 +4,10 @@ import { splitTextIntoWords } from '../animations/motions'
 import ScrollIndicator from '../components/ScrollIndicator'
 
 const PREVIEW_PATHS = [
-  { img: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800&q=80',  top: '15%', left: '10%', size: 'w-64 md:w-80', speed: 0.2 },
-  { img: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80',  top: '50%', left: '65%', size: 'w-56 md:w-72', speed: -0.3 },
-  { img: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=800&q=80',  top: '65%', left: '20%', size: 'w-48 md:w-60', speed: 0.4 },
-  { img: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=800&q=80',  top: '15%', left: '75%', size: 'w-52 md:w-64', speed: 0.3 },
+  { img: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=800&q=80', top: '15%', left: '10%', size: 'w-64 md:w-80', speed: 0.2 },
+  { img: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', top: '50%', left: '65%', size: 'w-56 md:w-72', speed: -0.3 },
+  { img: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=800&q=80', top: '65%', left: '20%', size: 'w-48 md:w-60', speed: 0.4 },
+  { img: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=800&q=80', top: '15%', left: '75%', size: 'w-52 md:w-64', speed: 0.3 },
 ]
 
 export default function Hero({ ready }) {
@@ -159,3 +159,4 @@ export default function Hero({ ready }) {
     </section>
   )
 }
+

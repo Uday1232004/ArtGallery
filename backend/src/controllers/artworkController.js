@@ -101,23 +101,30 @@ const createArtwork = async (req, res) => {
     }
 
     let finalArtistId = artistId;
+
     if (req.user.role === 'ARTIST') {
+      // ARTIST role: always use their own linked profile, ignore any artistId from body
       const artistProfile = await prisma.artist.findFirst({
-        where: {
-          OR: [
-            { user: { id: req.user.id } },
-            { name: req.user.name }
-          ]
-        }
+        where: { user: { id: req.user.id } }
       });
       if (!artistProfile) {
         return res.status(400).json({ message: 'No linked artist profile found for your account.' });
       }
       finalArtistId = artistProfile.id;
+    } else if (req.user.role === 'SUPER_ADMIN' || req.user.role === 'MANAGER') {
+      // Admin: if no artistId provided or invalid, fall back to their own linked artist profile
+      if (!finalArtistId || finalArtistId === 'all') {
+        const adminArtist = await prisma.artist.findFirst({
+          where: { user: { id: req.user.id } }
+        });
+        if (adminArtist) {
+          finalArtistId = adminArtist.id;
+        }
+      }
     }
 
     if (!finalArtistId) {
-      return res.status(400).json({ message: 'Artist assignment is required.' });
+      return res.status(400).json({ message: 'Artist assignment is required. Please ensure your account has a linked artist profile.' });
     }
 
     const artwork = await prisma.artwork.create({
@@ -187,12 +194,7 @@ const updateArtwork = async (req, res) => {
     let finalArtistId = artistId;
     if (req.user.role === 'ARTIST') {
       const artistProfile = await prisma.artist.findFirst({
-        where: {
-          OR: [
-            { user: { id: req.user.id } },
-            { name: req.user.name }
-          ]
-        }
+        where: { user: { id: req.user.id } }
       });
       if (!artistProfile || existingArtwork.artistId !== artistProfile.id) {
         return res.status(403).json({ message: 'You are not authorized to modify this artwork.' });

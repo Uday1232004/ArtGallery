@@ -251,9 +251,36 @@ export default function Gallery() {
 
           {/* Masonry Grid */}
           <div className="masonry-grid">
+            {isLoading && Array.from({length: 9}).map((_, i) => (
+              <div key={i} className="masonry-item work-card animate-pulse bg-white/5 rounded-sm" style={{height: i % 3 === 0 ? '28rem' : i % 3 === 1 ? '22rem' : '16rem'}} />
+            ))}
+
             {works.length === 0 && !isLoading && (
-              <div className="col-span-full py-20 text-center font-serif text-2xl text-mist">
-                No artworks found.
+              <div className="col-span-full py-32 flex flex-col items-center gap-6 text-center">
+                <div className="w-16 h-px bg-gold/30 mx-auto" />
+                <p className="font-serif text-3xl text-mist/60 font-light">
+                  {searchQuery || activeCat !== 'All' ? 'No artworks match your search.' : 'The gallery is empty.'}
+                </p>
+                <p className="font-sans text-xs tracking-[0.2em] text-mist/40 uppercase max-w-xs leading-relaxed">
+                  {searchQuery || activeCat !== 'All' 
+                    ? 'Try a different category or search term.' 
+                    : 'Artworks uploaded by creators will appear here.'}
+                </p>
+                {(searchQuery || activeCat !== 'All') ? (
+                  <button 
+                    onClick={() => { setSearchQuery(''); setActiveCat('All'); }}
+                    className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400"
+                  >
+                    Clear Filters
+                  </button>
+                ) : (
+                  <Link 
+                    to="/admin/artworks"
+                    className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400"
+                  >
+                    Upload First Artwork
+                  </Link>
+                )}
               </div>
             )}
 

@@ -257,8 +257,19 @@ export default function Artworks() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title.trim() || !medium.trim() || !price || !artistId) {
-      setErrorMsg('Required fields (*) must be completed before publishing.');
+
+    // Resolve the real artistId — 'all' is a UI-only sentinel, not a valid DB id
+    const resolvedArtistId = artistId === 'all'
+      ? (artists.find(a => a.userId === user?.id || a.email === user?.email)?.id || artists[0]?.id || '')
+      : artistId;
+
+    if (!title.trim() || !medium.trim() || !price || !resolvedArtistId) {
+      setErrorMsg('Required fields (*) must be completed before publishing. Make sure an artist profile is selected.');
+      return;
+    }
+
+    if (!artFile && !editingArtwork) {
+      setErrorMsg('Please select an image file for the artwork.');
       return;
     }
 
@@ -266,7 +277,7 @@ export default function Artworks() {
     formData.append('title', title);
     formData.append('category', mapUIToServerCategory(category));
     formData.append('medium', medium);
-    formData.append('yearCreated', year);
+    formData.append('yearCreated', year || new Date().getFullYear());
     formData.append('dimensions', dimensions);
     formData.append('price', price);
     formData.append('description', description);
@@ -275,7 +286,7 @@ export default function Artworks() {
     formData.append('isOriginal', isOriginal);
     formData.append('stock', stock);
     formData.append('status', isSold ? 'SOLD' : 'AVAILABLE');
-    formData.append('artistId', artistId);
+    formData.append('artistId', resolvedArtistId);
 
     if (artFile) {
       formData.append('image', artFile);

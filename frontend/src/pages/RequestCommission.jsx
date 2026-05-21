@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/axios';
+import { useAuthStore } from '../store/authStore';
 
 export default function RequestCommission() {
   const [artists, setArtists] = useState([]);
@@ -28,6 +29,7 @@ export default function RequestCommission() {
   const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -83,11 +85,9 @@ export default function RequestCommission() {
       formData.append('advanceAmount', '100');
       formData.append('paymentStatus', 'PAID');
       
-      // Get current logged-in user name/email from auth store or storage
-      const userStr = localStorage.getItem('user');
-      const userObj = userStr ? JSON.parse(userStr) : null;
-      formData.append('clientName', userObj?.name || cardName || 'Valued Client');
-      formData.append('email', userObj?.email || 'client@artbro.com');
+      // Get current logged-in user name/email from auth store
+      formData.append('clientName', user?.name || cardName || 'Valued Client');
+      formData.append('email', user?.email || '');
 
       if (referenceFile) {
         formData.append('referenceImage', referenceFile);

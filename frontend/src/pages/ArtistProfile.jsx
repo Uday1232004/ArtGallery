@@ -21,14 +21,6 @@ import { useCartStore } from '../store/cartStore';
 
 
 
-// Aesthetic mock reviews to populate Instagram comments
-const MOCK_COMMENTS = [
-  { user: 'alex_sketches', text: 'The depth of contrast in this drawing is absolutely hypnotic!' },
-  { user: 'curator_hub', text: 'Beautiful line precision. Reminds me of traditional Renaissance drafts.' },
-  { user: 'elena_art', text: 'Outstanding shading work on the paper texture. Love this.' },
-  { user: 'frame_master', text: 'This would look incredibly elegant behind museum-grade antireflective glass.' },
-  { user: 'marcus_galleries', text: 'Is this graphite or mixed charcoal? Sensational gradient work.' }
-];
 
 export default function ArtistProfile() {
   const { id } = useParams();
@@ -37,7 +29,7 @@ export default function ArtistProfile() {
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'series' | 'about'
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(1342);
+  const [followerCount, setFollowerCount] = useState(0);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
 
 
@@ -50,6 +42,7 @@ export default function ArtistProfile() {
         setIsLoading(true);
         const artistRes = await api.get(`/artists/${id}`);
         setArtist(artistRes.data);
+        setFollowerCount(artistRes.data.followersCount || 0);
 
         // Fetch all artworks and filter by current artist
         const artworksRes = await api.get('/artworks');
@@ -238,15 +231,11 @@ export default function ArtistProfile() {
                         className="w-full h-full object-cover filter brightness-95 group-hover:scale-102 transition-transform duration-500"
                         onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80'; }}
                       />
-                      {/* Premium IG Stat Overlay on Hover */}
+                      {/* Hover Overlay */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-6">
                         <div className="flex items-center gap-1.5 text-cream font-sans text-xs">
                           <Heart size={14} className="fill-cream" />
-                          <span>42</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-cream font-sans text-xs">
-                          <MessageCircle size={14} className="fill-cream" />
-                          <span>5</span>
+                          <span>{artwork.reviews?.length || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -258,24 +247,29 @@ export default function ArtistProfile() {
 
           {activeTab === 'series' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4">
-              <div className="bg-zinc-950/40 border border-white/5 p-6 flex flex-col justify-between aspect-[4/3] rounded-sm">
-                <div>
-                  <span className="font-sans text-[8px] tracking-[0.2em] text-gold uppercase block mb-1">Active Curation Series</span>
-                  <h4 className="font-serif text-xl text-cream mb-2">Contrast Lines</h4>
-                  <p className="font-sans text-[11px] text-mist/60 leading-relaxed">
-                    A limited collection exploring raw charcoal shading structures and volumetric pencil densities.
-                  </p>
-                </div>
-                <div className="text-[10px] text-mist font-sans">{artworks.length} sketched entries</div>
-              </div>
-              <div className="bg-zinc-950/40 border border-white/5 p-6 flex flex-col justify-between aspect-[4/3] rounded-sm border-dashed">
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-mist/30">
+              {artist.highlights && artist.highlights.length > 0 ? (
+                artist.highlights.map((highlight) => (
+                  <div key={highlight.id} className="bg-zinc-950/40 border border-white/5 p-6 flex flex-col justify-between aspect-[4/3] rounded-sm">
+                    <div>
+                      <span className="font-sans text-[8px] tracking-[0.2em] text-gold uppercase block mb-1">Curation Series</span>
+                      <h4 className="font-serif text-xl text-cream mb-2">{highlight.title}</h4>
+                      {highlight.coverImage && (
+                        <div className="w-full h-24 overflow-hidden rounded-sm mb-3">
+                          <img src={resolveImageUrl(highlight.coverImage)} alt={highlight.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-mist font-sans">{highlight.items?.length || 0} curated entries</div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full bg-zinc-950/40 border border-white/5 border-dashed p-6 flex flex-col items-center justify-center aspect-[4/3] sm:aspect-auto sm:py-12 rounded-sm">
+                  <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-mist/30 mb-2">
                     <Plus size={16} />
                   </div>
-                  <span className="font-sans text-[9px] tracking-widest text-mist/30 uppercase">Under Construction</span>
+                  <span className="font-sans text-[9px] tracking-widest text-mist/30 uppercase">No curations yet</span>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -386,17 +380,10 @@ export default function ArtistProfile() {
                     </p>
                   </div>
 
-                  {/* Instagram-style Comments list */}
+                  {/* Appreciation section */}
                   <div className="flex flex-col gap-4 border-t border-white/5 pt-4">
-                    <span className="font-sans text-[9px] tracking-wider text-mist/30 uppercase">Appreciation Feed</span>
-                    <div className="flex flex-col gap-3">
-                      {MOCK_COMMENTS.map((comment, idx) => (
-                        <div key={idx} className="flex gap-2.5 items-start text-[10px] font-sans">
-                          <span className="font-semibold text-cream">{comment.user}</span>
-                          <p className="text-mist/70 flex-1 leading-relaxed">{comment.text}</p>
-                        </div>
-                      ))}
-                    </div>
+                    <span className="font-sans text-[9px] tracking-wider text-mist/30 uppercase">Appreciation</span>
+                    <p className="font-sans text-[10px] text-mist/40 italic">Be the first to appreciate this work.</p>
                   </div>
 
                 </div>

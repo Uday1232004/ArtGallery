@@ -4,28 +4,6 @@ import { Award, Mail, Sparkles, BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import api, { resolveImageUrl } from '../lib/axios'
 
-const FALLBACK_ARTISTS = [
-  {
-    id: 'uday-chandra',
-    name: 'Uday Chandra',
-    specialization: 'Pencil Portraits & Devotional Art',
-    experience: 'Self-Taught Master',
-    bio: 'An engineering student by day and a self-taught artist by night. Captivated by cinematic storytelling, emotional depth, and rich textures. Specializes in realistic graphite/charcoal portraits, fine-line pen work, and highly detailed devotional representations of Krishna. For Uday, every sketch is not just an illustration, but a story breathing on paper, shaped by the interplay of light and absolute shadows.',
-    profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80',
-    socialLinks: {
-      instagram: 'https://instagram.com/uday.art',
-      behance: 'https://behance.net/uday',
-    },
-    specialties: [
-      'Pencil Realistic Portraits',
-      'Intricate Pen Art',
-      'Devotional Krishna Artworks',
-      'Charcoal Emotional Sketches',
-      'Cinematic Landscapes & Paintings',
-    ]
-  }
-]
-
 export default function Artists() {
   const { data: serverArtists, isLoading } = useQuery({
     queryKey: ['artists'],
@@ -36,7 +14,7 @@ export default function Artists() {
     retry: false,
   })
 
-  const artists = serverArtists && serverArtists.length > 0 ? serverArtists : FALLBACK_ARTISTS
+  const artists = serverArtists || []
 
   return (
     <div className="relative min-h-screen bg-void pt-32 pb-24 overflow-hidden pencil-texture">
@@ -67,6 +45,30 @@ export default function Artists() {
 
         {/* Artists Grid */}
         <div className="grid grid-cols-1 gap-24">
+          {isLoading && Array.from({length: 2}).map((_, i) => (
+            <div key={i} className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center border-b border-white/5 pb-20 last:border-0">
+              <div className="lg:col-span-5 animate-pulse bg-white/5 rounded-sm aspect-[4/5]" />
+              <div className="lg:col-span-7 flex flex-col gap-4">
+                <div className="animate-pulse bg-white/5 h-12 w-2/3 rounded-sm" />
+                <div className="animate-pulse bg-white/5 h-4 w-1/3 rounded-sm" />
+                <div className="animate-pulse bg-white/5 h-24 w-full rounded-sm" />
+              </div>
+            </div>
+          ))}
+
+          {!isLoading && artists.length === 0 && (
+            <div className="py-32 flex flex-col items-center gap-6 text-center border border-white/5 rounded-sm">
+              <div className="w-16 h-px bg-gold/30 mx-auto" />
+              <p className="font-serif text-3xl text-mist/60 font-light">No creators yet.</p>
+              <p className="font-sans text-xs tracking-[0.2em] text-mist/40 uppercase max-w-xs leading-relaxed">
+                Artists who join the platform will appear here. Be the first to share your work.
+              </p>
+              <Link to="/signup" className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400">
+                Join as Creator
+              </Link>
+            </div>
+          )}
+
           {artists.map((artist, idx) => (
             <motion.div
               key={artist.id}
@@ -109,7 +111,7 @@ export default function Artists() {
                     Creative Pillars
                   </h3>
                   <div className="flex flex-wrap gap-3">
-                    {(artist.specialties || ['Realistic Sketching', 'Krishna Art', 'Fine Pen Art']).map((specialty, sIdx) => (
+                    {(artist.specialization ? artist.specialization.split(',').map(s => s.trim()).filter(Boolean) : []).map((specialty, sIdx) => (
                       <span 
                         key={sIdx}
                         className="font-sans text-[10px] tracking-widest text-mist bg-white/5 border border-white/5 px-4 py-2 uppercase rounded-full"

@@ -67,19 +67,14 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Gallery', path: '/gallery' },
+    { name: 'Explore', path: '/gallery' },
     { name: 'Artists', path: '/artists' },
-    { name: 'Exhibitions', path: '/exhibitions' },
-    { name: 'Story', path: '/#manifesto' },
-    { name: 'About', path: '/#about' },
+    { name: 'Commissions', path: '/commissions/request' },
+    { name: 'Upload', path: '/admin/artworks' },
   ]
 
   // Helper for scroll vs page navigation
   const getHref = (path) => {
-    // If it's a hash link and we're on the home page, just scroll
-    if (path.startsWith('/#') && location.pathname === '/') {
-      return path.substring(1); // Return just '#section'
-    }
     return path;
   }
 
@@ -106,33 +101,18 @@ export default function Navbar() {
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => {
-               const href = getHref(item.path);
-               const isHash = href.startsWith('#');
-               
-               return isHash ? (
-                <a
-                  key={item.name}
-                  href={href}
-                  data-cursor-hover
-                  className="relative font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 group"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
-                </a>
-               ) : (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  onClick={item.name === 'Home' ? handleHomeClick : undefined}
-                  data-cursor-hover
-                  className="relative font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 group"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
-                </Link>
-               );
-            })}
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                onClick={item.name === 'Home' ? handleHomeClick : undefined}
+                data-cursor-hover
+                className="relative font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 group"
+              >
+                {item.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
+              </Link>
+            ))}
           </div>
 
           {/* Icons & CTA */}
@@ -229,14 +209,6 @@ export default function Navbar() {
                 </span>
               )}
             </button>
-
-            <Link
-              to="/commissions/request"
-              data-cursor-hover
-              className="hidden md:flex items-center gap-2 font-sans text-xs tracking-[0.2em] text-void bg-ivory px-6 py-3 uppercase hover:bg-gold hover:text-void transition-all duration-400"
-            >
-              Commission
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -259,34 +231,20 @@ export default function Navbar() {
         }`}
       >
         <div className="flex flex-col items-center gap-6 max-h-[80vh] overflow-y-auto w-full py-6">
-          {navItems.map((item, i) => {
-             const href = getHref(item.path);
-             const isHash = href.startsWith('#');
-             return isHash ? (
-              <a
-                key={item.name}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
-                style={{ transitionDelay: `${i * 40}ms` }}
-              >
-                {item.name}
-              </a>
-             ) : (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={(e) => {
-                  setMenuOpen(false);
-                  if (item.name === 'Home') handleHomeClick(e);
-                }}
-                className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
-                style={{ transitionDelay: `${i * 40}ms` }}
-              >
-                {item.name}
-              </Link>
-             );
-          })}
+          {navItems.map((item, i) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              onClick={(e) => {
+                setMenuOpen(false);
+                if (item.name === 'Home') handleHomeClick(e);
+              }}
+              className="font-serif text-3xl tracking-wide text-ivory hover:text-gold transition-colors duration-300"
+              style={{ transitionDelay: `${i * 40}ms` }}
+            >
+              {item.name}
+            </Link>
+          ))}
 
           <div className="w-12 h-px bg-white/10 my-2" />
 

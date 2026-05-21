@@ -44,7 +44,11 @@ export default function App() {
   const isAdminOrLogin = location.pathname.startsWith('/admin') || location.pathname === '/login' || location.pathname === '/signup';
 
   const { fetchCart } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isHydrating, initAuth } = useAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -80,6 +84,16 @@ export default function App() {
       }
     }
   }, [location.pathname, location.hash]);
+
+  // Prevent UI flicker by waiting for auth hydration
+  if (isHydrating) {
+    return (
+      <div className="min-h-screen bg-void flex items-center justify-center pencil-texture relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(222,214,199,0.05)_0%,transparent_80%)] z-0" />
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin z-10" />
+      </div>
+    );
+  }
 
   return (
     <div className="noise-overlay min-h-screen bg-void text-mist">

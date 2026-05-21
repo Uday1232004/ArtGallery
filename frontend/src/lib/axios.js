@@ -36,6 +36,9 @@ api.interceptors.response.use(
 
 export const normalizeImageUrl = (url) => {
   if (!url) return '';
+  if (url === '/placeholder.jpg' || url === 'placeholder.jpg') {
+    return 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&q=80&auto=format&fit=crop'; // Cinematic fallback
+  }
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
     return url;
   }

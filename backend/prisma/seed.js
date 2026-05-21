@@ -6,23 +6,14 @@ const { copySeedAssetSafely } = require('../src/utils/assetHelper');
 async function main() {
   console.log('Start seeding...');
 
-  // Clean up existing data (preserve users so Google-linked accounts survive)
-  await prisma.cartItem.deleteMany();
-  await prisma.wishlistItem.deleteMany();
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.sale.deleteMany();
-  await prisma.commission.deleteMany();
-  await prisma.exhibitionArtwork.deleteMany();
-  await prisma.exhibition.deleteMany();
-  await prisma.artwork.deleteMany();
-  await prisma.highlight.deleteMany();
-
-  // Remove all artists so we can recreate cleanly
-  // First unlink users from artists
-  await prisma.user.updateMany({ data: { artistId: null } });
-  await prisma.artist.deleteMany();
+  // Check if data already exists — if so, skip seeding to preserve user uploads
+  const existingArtworkCount = await prisma.artwork.findFirst();
+  if (existingArtworkCount) {
+    console.log('✅ Database already has data. Skipping seed to preserve existing content.');
+    console.log('   To force re-seed, manually clear the database first.');
+    return;
+  }
+  console.log('📦 Empty database detected. Running initial seed...');
 
   // ─── 1. Ensure the main admin/artist account exists ───────────────────────
   const salt = await bcrypt.genSalt(10);

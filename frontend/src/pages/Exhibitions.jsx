@@ -3,41 +3,8 @@ import { motion } from 'framer-motion'
 import { Calendar, MapPin, Sparkles, ArrowUpRight } from 'lucide-react'
 import api, { resolveImageUrl } from '../lib/axios'
 
-const FALLBACK_EXHIBITIONS = [
-  {
-    id: 'silent-conversation',
-    name: 'The Silent Conversation',
-    theme: 'Realistic Charcoal & Graphite Studies',
-    description: 'An immersive examination of unuttered human emotions, micro-expressions, and connections. Each hyper-realistic pencil portrait in this series acts as a window into a quiet moment of absolute vulnerability, mirroring the cinematic intimacy of vintage cinematography.',
-    startDate: '2026-06-01T00:00:00.000Z',
-    endDate: '2026-06-30T00:00:00.000Z',
-    location: 'Digital Space & ARTHAUS Gallery',
-    bannerImage: 'https://images.unsplash.com/photo-1544502062-f82887f03d1c?w=1000&q=80',
-  },
-  {
-    id: 'glow-of-devotion',
-    name: 'Glow of Devotion',
-    theme: 'Spiritual Portraits of Krishna',
-    description: 'Tracing the divine representation of Krishna through high-contrast charcoal combined with delicate gold leaf. A visually breathtaking series exploring devotion, serenity, and inner glow amidst absolute darkness.',
-    startDate: '2026-08-15T00:00:00.000Z',
-    endDate: '2026-09-15T00:00:00.000Z',
-    location: 'Interactive Virtual Showcase',
-    bannerImage: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=1000&q=80',
-  },
-  {
-    id: 'abstract-whispers',
-    name: 'Abstract Whispers',
-    theme: 'Fineliner Pen & Neural Path Art',
-    description: 'Exploring the boundary between structural neural geometry and pure artistic impulse. A stunning collection of fine-line pen work mapping complex thoughts, flow states, and micro-textures.',
-    startDate: '2026-10-01T00:00:00.000Z',
-    endDate: '2026-10-31T00:00:00.000Z',
-    location: 'ARTHAUS Main Hall',
-    bannerImage: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1000&q=80',
-  }
-]
-
 export default function Exhibitions() {
-  const { data: serverExhibitions } = useQuery({
+  const { data: serverExhibitions, isLoading } = useQuery({
     queryKey: ['exhibitions'],
     queryFn: async () => {
       const res = await api.get('/exhibitions')
@@ -46,7 +13,7 @@ export default function Exhibitions() {
     retry: false,
   })
 
-  const exhibitions = serverExhibitions && serverExhibitions.length > 0 ? serverExhibitions : FALLBACK_EXHIBITIONS
+  const exhibitions = serverExhibitions || []
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -84,6 +51,35 @@ export default function Exhibitions() {
         </motion.div>
 
         {/* Exhibitions Timeline */}
+        {isLoading && (
+          <div className="flex flex-col gap-32">
+            {Array.from({length: 2}).map((_, i) => (
+              <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+                <div className="animate-pulse bg-white/5 rounded-sm aspect-[16/10]" />
+                <div className="flex flex-col gap-4 py-4">
+                  <div className="animate-pulse bg-white/5 h-4 w-1/3 rounded-sm" />
+                  <div className="animate-pulse bg-white/5 h-10 w-2/3 rounded-sm" />
+                  <div className="animate-pulse bg-white/5 h-20 w-full rounded-sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && exhibitions.length === 0 && (
+          <div className="py-32 flex flex-col items-center gap-6 text-center border border-white/5 rounded-sm">
+            <div className="w-16 h-px bg-gold/30 mx-auto" />
+            <p className="font-serif text-3xl text-mist/60 font-light">No exhibitions yet.</p>
+            <p className="font-sans text-xs tracking-[0.2em] text-mist/40 uppercase max-w-xs leading-relaxed">
+              Curated exhibitions will appear here when created by the gallery team.
+            </p>
+            <Link to="/gallery" className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400 mt-4">
+              Explore Gallery
+            </Link>
+          </div>
+        )}
+
+        {!isLoading && exhibitions.length > 0 && (
         <div className="flex flex-col gap-32 relative before:absolute before:left-0 before:md:left-1/2 before:top-4 before:bottom-4 before:w-px before:bg-white/5">
           {exhibitions.map((ex, idx) => {
             const isEven = idx % 2 === 0;
@@ -179,6 +175,7 @@ export default function Exhibitions() {
             )
           })}
         </div>
+        )}
       </div>
     </div>
   )
