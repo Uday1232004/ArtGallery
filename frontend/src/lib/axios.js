@@ -28,7 +28,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      // Let React Router handle the redirect smoothly via ProtectedRoute or component state
     }
     return Promise.reject(error);
   }

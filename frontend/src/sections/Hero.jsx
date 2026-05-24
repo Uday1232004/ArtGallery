@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { gsap } from '../animations/gsap'
 import { splitTextIntoWords } from '../animations/motions'
 import ScrollIndicator from '../components/ScrollIndicator'
+import { useCursorHover } from '../hooks/useCursorHover'
 
 const PREVIEW_PATHS = [
   { img: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=800&q=80', top: '15%', left: '10%', size: 'w-64 md:w-80', speed: 0.2 },
@@ -16,6 +17,8 @@ export default function Hero({ ready }) {
   const previewsRef = useRef([])
   const metaRef = useRef(null)
   const subtagRef = useRef(null)
+  const textHover = useCursorHover('text')
+
 
   useEffect(() => {
     if (!ready) return
@@ -140,8 +143,9 @@ export default function Hero({ ready }) {
 
         <h1
           ref={headlineRef}
-          className="font-serif font-light text-cream leading-[1] tracking-tight will-change-transform max-w-5xl mx-auto"
+          className="font-serif font-light text-cream leading-[1] tracking-tight will-change-transform max-w-5xl mx-auto pointer-events-auto"
           style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)', textShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
+          {...textHover}
         >
           Connecting Creators & Art Lovers.
         </h1>
@@ -159,4 +163,3 @@ export default function Hero({ ready }) {
     </section>
   )
 }
-

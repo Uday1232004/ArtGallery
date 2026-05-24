@@ -144,7 +144,7 @@ const updateCommissionStatus = async (req, res) => {
             title: `Custom Sketch: ${existingCommission.artworkType}`,
             description: `Commissioned custom sketch request from ${existingCommission.clientName}. Description: ${existingCommission.message}`,
             artworkStory: `A bespoke custom sketch crafted by master artist.`,
-            category: 'PORTRAIT',
+            category: 'Realistic Portrait',
             medium: 'Graphite / Pencil Custom Media',
             price: parseFloat(finalPrice),
             status: 'AVAILABLE',

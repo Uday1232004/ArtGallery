@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from '../animations/gsap'
-import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, User } from 'lucide-react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
+import { ShoppingCart, User, ShoppingBag, Search } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
 import { useAuthStore } from '../store/authStore'
 import { normalizeImageUrl } from '../lib/axios'
 import { getLenis } from '../animations/lenis'
+import { useCursorHover } from '../hooks/useCursorHover'
+import SearchPanel from './SearchPanel'
+import { ErrorBoundary } from './ErrorBoundary'
 
 /**
  * Navbar — transparent initially, fills on scroll
@@ -19,6 +22,19 @@ export default function Navbar() {
   
   const { count, openCart } = useCartStore()
   const { isAuthenticated, user, isAdmin } = useAuthStore()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  const textHover = useCursorHover('text')
+  const buttonHover = useCursorHover('button')
+
+  const navItems = [
+    { name: 'Home', path: '/' },
+    { name: 'Explore', path: '/gallery' },
+    { name: 'Artists', path: '/artists' },
+    { name: 'Exhibitions', path: '/exhibitions' },
+  ]
 
   const handleHomeClick = (e) => {
     if (location.pathname === '/') {
@@ -40,7 +56,6 @@ export default function Navbar() {
     const animationDelay = hasLoadedBefore ? 0.1 : 3.2;
 
     const ctx = gsap.context(() => {
-      // Use fromTo to ensure starting/ending opacity is guaranteed even in StrictMode
       gsap.fromTo(nav, 
         { y: -20, opacity: 0 },
         {
@@ -53,7 +68,6 @@ export default function Navbar() {
       )
     })
 
-    // Scroll listener
     const handleScroll = () => {
       setScrolled(window.scrollY > 80)
     }
@@ -64,19 +78,6 @@ export default function Navbar() {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
-
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Explore', path: '/gallery' },
-    { name: 'Artists', path: '/artists' },
-    { name: 'Commissions', path: '/commissions/request' },
-    { name: 'Upload', path: '/admin/artworks' },
-  ]
-
-  // Helper for scroll vs page navigation
-  const getHref = (path) => {
-    return path;
-  }
 
   return (
     <>
@@ -89,40 +90,49 @@ export default function Navbar() {
         }`}
       >
         <div className="flex items-center justify-between px-8 md:px-16 max-w-[1800px] mx-auto">
-          {/* Logo */}
           <Link
             to="/"
             onClick={handleHomeClick}
             className="font-serif text-xl tracking-[0.3em] text-ivory uppercase font-light"
-            data-cursor-hover
+            {...textHover}
           >
             ArtBro Sketches
           </Link>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={item.name === 'Home' ? handleHomeClick : undefined}
-                data-cursor-hover
-                className="relative font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 group"
-              >
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
-              </Link>
-            ))}
+          {/* Global Search Bar */}
+          <div className="search-container hidden lg:flex flex-1 max-w-md mx-8 relative">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search size={14} className="text-mist/50" />
+            </div>
+            <input
+              id="global-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setIsSearchOpen(true)
+              }}
+              onFocus={() => setIsSearchOpen(true)}
+              placeholder="Search artworks, artists, styles..."
+              className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 font-sans text-xs text-ivory placeholder-mist/40 focus:outline-none focus:border-gold/50 focus:bg-white/10 transition-all"
+              {...textHover}
+            />
           </div>
 
-          {/* Icons & CTA */}
+          <div className="hidden md:flex items-center gap-8">
+              <NavLink to="/" onClick={handleHomeClick} className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300" {...textHover}>Home</NavLink>
+              <NavLink to="/gallery" className={({isActive}) => `font-sans text-[11px] tracking-[0.2em] uppercase transition-colors duration-300 ${isActive ? 'text-ivory' : 'text-mist hover:text-ivory'}`} {...textHover}>Explore</NavLink>
+              <NavLink to="/artists" className={({isActive}) => `font-sans text-[11px] tracking-[0.2em] uppercase transition-colors duration-300 ${isActive ? 'text-ivory' : 'text-mist hover:text-ivory'}`} {...textHover}>Artists</NavLink>
+              <NavLink to="/commissions/request" className={({isActive}) => `font-sans text-[11px] tracking-[0.2em] uppercase transition-colors duration-300 ${isActive ? 'text-ivory' : 'text-mist hover:text-ivory'}`} {...textHover}>Commissions</NavLink>
+          </div>
+
           <div className="hidden md:flex items-center gap-6">
             {isAuthenticated ? (
               <>
-                {isAdmin() ? (
                   <Link
-                    to="/admin"
+                    to={isAdmin() ? "/admin" : "/profile"}
                     className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    {...buttonHover}
                   >
                     <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
                       {user?.profileImage && (
@@ -133,85 +143,40 @@ export default function Navbar() {
                           onError={(e) => { e.target.style.display = 'none'; }} 
                         />
                       )}
-                      <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
-                        {user?.name?.charAt(0) || user?.username?.charAt(0) || 'A'}
-                      </div>
                     </div>
-                    <span className="font-sans text-[11px] tracking-[0.2em] text-gold uppercase hidden lg:block">
-                      {user?.name || user?.username || 'Admin Dashboard'}
-                    </span>
                   </Link>
-                ) : (
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  <button
+                    onClick={() => {
+                      useAuthStore.getState().logout();
+                      window.location.href = '/';
+                    }}
+                    className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-red-400 transition-colors duration-300"
+                    {...buttonHover}
                   >
-                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 bg-zinc-900 relative">
-                      {user?.profileImage && (
-                        <img 
-                          src={normalizeImageUrl(user.profileImage)} 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover absolute top-0 left-0" 
-                          onError={(e) => { e.target.style.display = 'none'; }} 
-                        />
-                      )}
-                      <div className="w-full h-full flex items-center justify-center text-xs text-mist/50 font-serif">
-                        {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                      </div>
-                    </div>
-                    <span className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hidden lg:block">
-                      {user?.name || user?.username || 'Profile'}
-                    </span>
-                  </Link>
-                )}
-                <button
-                  onClick={() => {
-                    useAuthStore.getState().logout();
-                    window.location.href = '/';
-                  }}
-                  data-cursor-hover
-                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-red-400 transition-colors duration-300 relative group"
-                >
-                  Logout
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-red-400 transition-all duration-400 group-hover:w-full" />
-                </button>
+                    Logout
+                  </button>
               </>
             ) : (
               <>
-                <Link
-                  to="/login"
-                  data-cursor-hover
-                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
-                >
-                  Login
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
-                </Link>
-                <Link
-                  to="/signup"
-                  data-cursor-hover
-                  className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300 relative group"
-                >
-                  Signup
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-gold transition-all duration-400 group-hover:w-full" />
-                </Link>
+                  <Link to="/login" className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300" {...textHover}>Login</Link>
+                  <Link to="/signup" className="font-sans text-[11px] tracking-[0.2em] text-mist uppercase hover:text-ivory transition-colors duration-300" {...textHover}>Signup</Link>
               </>
             )}
             
-            <button 
-              onClick={openCart}
-              data-cursor-hover 
-              className="relative text-mist hover:text-ivory transition-colors"
-            >
-              <ShoppingCart size={20} />
-              {count > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gold text-void text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {count}
-                </span>
-              )}
-            </button>
+              <button 
+                onClick={openCart}
+                className="relative text-mist hover:text-ivory transition-colors"
+                {...buttonHover}
+              >
+                <ShoppingCart size={20} />
+                {count > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gold text-void text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {count}
+                  </span>
+                )}
+              </button>
           </div>
 
-          {/* Mobile menu button */}
           <button
             className="md:hidden flex flex-col gap-1.5 p-2"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -231,6 +196,25 @@ export default function Navbar() {
         }`}
       >
         <div className="flex flex-col items-center gap-6 max-h-[80vh] overflow-y-auto w-full py-6">
+          
+          <div className="search-container w-[80%] max-w-sm mb-4 relative">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search size={14} className="text-mist/50" />
+            </div>
+            <input
+              id="global-search-input-mobile"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setIsSearchOpen(true)
+                setMenuOpen(false)
+              }}
+              placeholder="Search artworks..."
+              className="w-full bg-white/5 border border-white/10 rounded-full py-3 pl-10 pr-4 font-sans text-sm text-ivory placeholder-mist/40 focus:outline-none focus:border-gold/50 transition-all"
+            />
+          </div>
+
           {navItems.map((item, i) => (
             <Link
               key={item.name}
@@ -311,6 +295,16 @@ export default function Navbar() {
           ART THAT FEELS ALIVE
         </div>
       </div>
+      
+      <ErrorBoundary>
+        <SearchPanel 
+          query={searchQuery} 
+          isOpen={isSearchOpen} 
+          onClose={() => {
+            setIsSearchOpen(false)
+          }} 
+        />
+      </ErrorBoundary>
     </>
   )
 }

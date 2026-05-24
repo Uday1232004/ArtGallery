@@ -1,28 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Layers, DollarSign, Award, Heart } from 'lucide-react'
+import { X, Calendar, Layers, IndianRupee, Award, Heart } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { gsap, ScrollTrigger } from '../animations/gsap'
 import api, { resolveImageUrl } from '../lib/axios'
+import { useCursor } from '../context/CursorContext'
 import { useCartStore } from '../store/cartStore'
 import { useWishlistStore } from '../store/wishlistStore'
 import { useAuthStore } from '../store/authStore'
 
-const CATEGORIES = ['All', 'Portraits', 'Pen Art', 'Paintings', 'Krishna', 'Experimental']
 
-const heightMap = { tall: 'h-80 md:h-[28rem]', medium: 'h-60 md:h-[22rem]', short: 'h-48 md:h-[16rem]' }
-
-const mapCategoryToUI = (serverCategory) => {
-  switch (serverCategory) {
-    case 'PORTRAIT': return 'Portraits';
-    case 'PEN_ART': return 'Pen Art';
-    case 'PAINTING': return 'Paintings';
-    case 'KRISHNA_ART': return 'Krishna';
-    case 'EXPERIMENTAL': return 'Experimental';
-    default: return serverCategory;
-  }
-}
 
 export default function Works() {
   const sectionRef = useRef(null)
@@ -33,6 +21,7 @@ export default function Works() {
   
   // Selected artwork state for dynamic detail modal
   const [selectedArtwork, setSelectedArtwork] = useState(null)
+  const { setHoverState, resetCursor } = useCursor()
   
   // Navigation and Stores
   const navigate = useNavigate()
@@ -57,7 +46,7 @@ export default function Works() {
     id: w.id || idx,
     title: w.title,
     medium: w.medium,
-    category: w.category ? mapCategoryToUI(w.category) : 'Experimental',
+    category: w.category || 'Uncategorized',
     size: w.size || sizes[idx % 3],
     image: resolveImageUrl(w.image),
     dimensions: w.dimensions || '18" x 24"',
@@ -67,6 +56,8 @@ export default function Works() {
     description: w.description || 'A cinematic piece created with high passion and meticulous attention to detail.',
     artistName: w.artist?.name || 'ArtBro Gallery'
   }))
+
+  const CATEGORIES = ['All', ...new Set(works.map(w => w.category).filter(Boolean))];
 
   const filteredWorks = activeCat === 'All' 
     ? works 
@@ -238,8 +229,9 @@ export default function Works() {
             <div 
               key={`${work.title}-${i}`} 
               onClick={() => setSelectedArtwork(work)}
-              className="masonry-item work-card group relative overflow-hidden rounded-sm cursor-none will-change-transform" 
-              data-cursor-hover
+              className="masonry-item work-card group relative overflow-hidden rounded-sm will-change-transform cursor-pointer" 
+              onMouseEnter={() => setHoverState('artwork', work.medium || work.category || 'Artwork')}
+              onMouseLeave={resetCursor}
             >
               <div className="work-card-inner relative overflow-hidden w-full h-auto">
                 <img
@@ -353,11 +345,11 @@ export default function Works() {
                     </div>
                     <div>
                       <div className="font-sans text-[9px] tracking-widest text-mist uppercase mb-1 flex items-center gap-1.5 justify-center md:justify-start">
-                        <DollarSign size={10} className="text-gold/80" />
+                        <IndianRupee size={10} className="text-gold/80" />
                         Value
                       </div>
                       <div className="font-serif text-lg text-cream">
-                        {selectedArtwork.price ? `$${selectedArtwork.price.toLocaleString()}` : 'Priceless / Inquiry'}
+                        {selectedArtwork.price ? `₹${selectedArtwork.price.toLocaleString()}` : 'Priceless / Inquiry'}
                       </div>
                     </div>
                   </div>

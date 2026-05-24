@@ -286,7 +286,7 @@ async function main() {
       email: 'sarah@example.com',
       phone: '+1 555-9876',
       artworkType: 'Realistic Portrait',
-      budget: '$500',
+      budget: '₹500',
       message: 'I would like a pencil portrait of my grandfather based on the attached reference photo.',
       status: 'PENDING',
       shippingAddress: '789 Portrait Lane',

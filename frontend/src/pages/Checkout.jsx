@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
-import api from '../lib/axios';
+import api, { resolveImageUrl } from '../lib/axios';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
-import { ShieldCheck, Truck, Lock, CreditCard, DollarSign } from 'lucide-react';
+import { ShieldCheck, Truck, Lock, CreditCard, IndianRupee } from 'lucide-react';
 import { gsap } from '../animations/gsap';
 
 export default function Checkout() {
@@ -175,7 +175,7 @@ export default function Checkout() {
                           : 'border-white/10 bg-void/30 text-mist hover:border-white/20'
                       }`}
                     >
-                      <DollarSign size={20} className="mb-2" />
+                      <IndianRupee size={20} className="mb-2" />
                       <span className="font-sans text-[11px] uppercase tracking-widest font-bold">Cash on Delivery</span>
                       <span className="font-sans text-[9px] text-mist/60 mt-1">Pay with cash upon delivery</span>
                     </button>
@@ -217,7 +217,7 @@ export default function Checkout() {
                   disabled={isProcessing}
                   className="w-full bg-ivory text-void hover:bg-gold hover:text-void font-sans text-xs tracking-[0.3em] uppercase py-5 transition-colors font-bold mt-8"
                 >
-                  {isProcessing ? 'Processing Order...' : `Complete Order • $${total.toLocaleString()}`}
+                  {isProcessing ? 'Processing Order...' : `Complete Order • ₹${total.toLocaleString()}`}
                 </button>
               </form>
             </div>
@@ -230,13 +230,13 @@ export default function Checkout() {
                 <div className="space-y-6 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                   {items.map(item => (
                     <div key={item.id} className="flex gap-4">
-                      <img src={item.artwork.image} alt={item.artwork.title} className="w-20 h-24 object-cover sepia-[0.1]" />
+                      <img src={resolveImageUrl(item.artwork.image)} alt={item.artwork.title} className="w-20 h-24 object-cover sepia-[0.1]" />
                       <div className="flex-1 flex flex-col justify-between py-1">
                         <div>
                           <h4 className="font-serif text-lg text-ivory leading-tight">{item.artwork.title}</h4>
                           <p className="font-sans text-[9px] tracking-widest uppercase text-mist mt-1">{item.artwork.medium}</p>
                         </div>
-                        <p className="font-sans text-sm text-gold">${item.artwork.price.toLocaleString()}</p>
+                        <p className="font-sans text-sm text-gold">₹{item.artwork.price.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
@@ -245,7 +245,7 @@ export default function Checkout() {
                 <div className="space-y-3 border-t border-white/5 pt-6 mb-6">
                   <div className="flex justify-between font-sans text-xs text-mist uppercase tracking-widest">
                     <span>Subtotal</span>
-                    <span>${total.toLocaleString()}</span>
+                    <span>₹{total.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between font-sans text-xs text-mist uppercase tracking-widest">
                     <span>Shipping (Insured)</span>
@@ -255,7 +255,7 @@ export default function Checkout() {
 
                 <div className="flex justify-between items-end border-t border-white/5 pt-6 mb-8">
                   <span className="font-sans text-xs text-mist uppercase tracking-widest">Total</span>
-                  <span className="font-serif text-3xl text-cream">${total.toLocaleString()}</span>
+                  <span className="font-serif text-3xl text-cream">₹{total.toLocaleString()}</span>
                 </div>
 
                 <div className="space-y-4">

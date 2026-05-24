@@ -135,7 +135,7 @@ export default function ArtistProfile() {
                   {isFollowing ? 'Following' : 'Follow Artist'}
                 </button>
                 <Link
-                  to="/commissions/request"
+                  to={`/commissions/request?artistId=${artist.id}`}
                   className="px-5 py-2 rounded-none font-sans text-[10px] tracking-[0.2em] uppercase bg-zinc-900 border border-white/5 text-cream hover:bg-white/5 transition-all duration-300 font-semibold"
                 >
                   Inquire Sketch
@@ -233,10 +233,14 @@ export default function ArtistProfile() {
                       />
                       {/* Hover Overlay */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-6">
-                        <div className="flex items-center gap-1.5 text-cream font-sans text-xs">
-                          <Heart size={14} className="fill-cream" />
-                          <span>{artwork.reviews?.length || 0}</span>
-                        </div>
+                        {artwork.reviews?.length > 0 ? (
+                          <div className="flex items-center gap-1.5 text-cream font-sans text-xs">
+                            <Heart size={14} className="fill-cream" />
+                            <span>{artwork.reviews.length}</span>
+                          </div>
+                        ) : (
+                          <span className="font-sans text-[10px] tracking-[0.25em] text-cream uppercase border border-white/20 px-4 py-2 backdrop-blur-sm">View Post</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -393,7 +397,7 @@ export default function ArtistProfile() {
                   <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                       <span className="font-sans text-[8px] tracking-widest text-mist/40 uppercase">Collector Price</span>
-                      <span className="font-sans text-lg font-bold text-cream">${selectedArtwork.price}</span>
+                      <span className="font-sans text-lg font-bold text-cream">₹{selectedArtwork.price}</span>
                     </div>
                     <span className={`font-sans text-[9px] tracking-widest uppercase px-2.5 py-0.5 border ${
                       selectedArtwork.status === 'SOLD' 

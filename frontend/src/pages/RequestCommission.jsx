@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
 
@@ -7,7 +7,7 @@ export default function RequestCommission() {
   const [artists, setArtists] = useState([]);
   const [selectedArtistId, setSelectedArtistId] = useState('');
   const [artworkType, setArtworkType] = useState('Realistic Portrait');
-  const [budget, setBudget] = useState('$500');
+  const [budget, setBudget] = useState('₹500');
   const [deadline, setDeadline] = useState('');
   const [message, setMessage] = useState('');
   const [phone, setPhone] = useState('');
@@ -29,6 +29,7 @@ export default function RequestCommission() {
   const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -36,7 +37,12 @@ export default function RequestCommission() {
       try {
         const response = await api.get('/artists');
         setArtists(response.data);
-        if (response.data.length > 0) {
+        const params = new URLSearchParams(location.search);
+        const urlArtistId = params.get('artistId');
+
+        if (urlArtistId && response.data.some(a => a.id === urlArtistId)) {
+          setSelectedArtistId(urlArtistId);
+        } else if (response.data.length > 0) {
           setSelectedArtistId(response.data[0].id);
         }
       } catch (err) {
@@ -124,9 +130,7 @@ export default function RequestCommission() {
               <span className="text-gold text-2xl font-light">✓</span>
             </div>
             <h3 className="font-serif text-2xl text-cream mb-4">Request Submitted Successfully!</h3>
-            <p className="font-sans text-sm text-mist leading-relaxed mb-6">
-              Your $100 advance deposit has been processed. We have notified your chosen artist to review the request, draft a final proposal and assign your deadline!
-            </p>
+            <p className="text-ivory/80 leading-relaxed max-w-lg mx-auto">Your ₹100 advance deposit has been processed. We have notified your chosen artist to review the request, draft a final proposal and assign your deadline!</p>
             <p className="font-sans text-[10px] tracking-widest text-gold uppercase animate-pulse">
               Redirecting to your profile space...
             </p>
@@ -194,7 +198,7 @@ export default function RequestCommission() {
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                       className="w-full bg-void/50 border border-white/10 px-4 py-3 font-sans text-sm text-ivory focus:outline-none focus:border-gold transition-colors duration-400"
-                      placeholder="e.g. $400 - $600"
+                      placeholder="e.g. ₹4000 - ₹6000"
                     />
                   </div>
                 </div>
@@ -322,7 +326,7 @@ export default function RequestCommission() {
               </div>
 
               <div className="font-sans text-xs text-mist leading-relaxed bg-void/30 p-4 border border-white/5">
-                <span className="text-gold font-semibold">🔒 Verification Guarantee</span>: A minimum advance authorization of **$100.00** is required to engage the artist. If the resident artist declines or does not approve your sketch requirements, the deposit is **instantly refunded** back to your card.
+                <span className="text-gold font-semibold">🔒 Verification Guarantee</span>: A minimum advance authorization of **₹100.00** is required to engage the artist. If the resident artist declines or does not approve your sketch requirements, the deposit is **instantly refunded** back to your card.
               </div>
 
               {/* High-fidelity credit card UI */}
@@ -387,7 +391,7 @@ export default function RequestCommission() {
               <div className="border-t border-white/10 pt-4 flex flex-col gap-2 font-sans text-xs">
                 <div className="flex justify-between text-mist">
                   <span>Advance Verification Hold</span>
-                  <span>$100.00</span>
+                  <span>₹100.00</span>
                 </div>
                 <div className="flex justify-between text-mist">
                   <span>Processing & Upload Fees</span>
@@ -395,7 +399,7 @@ export default function RequestCommission() {
                 </div>
                 <div className="flex justify-between text-cream font-serif text-sm border-t border-white/5 pt-2 mt-2">
                   <span>Total Deposit Amount</span>
-                  <span className="text-gold font-semibold">$100.00</span>
+                  <span className="text-gold font-semibold">₹100.00</span>
                 </div>
               </div>
 

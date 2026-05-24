@@ -155,13 +155,13 @@ const updateArtist = async (req, res) => {
     const updatedArtist = await prisma.artist.update({
       where: { id: req.params.id },
       data: {
-        name: name !== undefined ? name : undefined,
-        username: username !== undefined ? username : undefined,
+        name: name !== undefined && name !== '' ? name : undefined,
+        username: username === '' ? null : username !== undefined ? username : undefined,
         bio: bio !== undefined ? bio : undefined,
-        website: website !== undefined ? website : undefined,
-        location: location !== undefined ? location : undefined,
+        website: website === '' ? null : website !== undefined ? website : undefined,
+        location: location === '' ? null : location !== undefined ? location : undefined,
         specialization: specialization !== undefined ? specialization : undefined,
-        experience: experience !== undefined ? experience : undefined,
+        experience: experience === '' ? null : experience !== undefined ? experience : undefined,
         profileImage: newProfileImage !== undefined ? newProfileImage : undefined,
         socialLinks: socialLinks ? JSON.parse(socialLinks) : undefined,
       }
@@ -195,6 +195,9 @@ const updateArtist = async (req, res) => {
     });
   } catch (error) {
     console.error('[UpdateArtist] ❌ Error:', error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
+      return res.status(400).json({ message: 'This username is already taken. Please choose another one.' });
+    }
     res.status(500).json({ message: 'Server Error' });
   }
 };

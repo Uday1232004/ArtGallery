@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Layers, CheckCircle, Mail, DollarSign, Award, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
+import { X, Calendar, Layers, CheckCircle, Mail, IndianRupee, Award, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { gsap, ScrollTrigger } from '../animations/gsap';
 import api, { resolveImageUrl } from '../lib/axios';
 import { Link } from 'react-router-dom';
@@ -11,20 +11,7 @@ import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useAuthStore } from '../store/authStore';
 
-const CATEGORIES = ['All', 'Portraits', 'Pen Art', 'Paintings', 'Krishna', 'Experimental'];
-
 const heightMap = { tall: 'h-80 md:h-[28rem]', medium: 'h-60 md:h-[22rem]', short: 'h-48 md:h-[16rem]' };
-
-const mapCategoryToUI = (serverCategory) => {
-  switch (serverCategory) {
-    case 'PORTRAIT': return 'Portraits';
-    case 'PEN_ART': return 'Pen Art';
-    case 'PAINTING': return 'Paintings';
-    case 'KRISHNA_ART': return 'Krishna';
-    case 'EXPERIMENTAL': return 'Experimental';
-    default: return serverCategory;
-  }
-};
 
 export default function Gallery() {
   const sectionRef = useRef(null);
@@ -63,12 +50,16 @@ export default function Gallery() {
   const rawWorks = serverWorks || [];
   const sizes = ['tall', 'medium', 'short'];
   
+  const CATEGORIES = useMemo(() => {
+    return ['All', ...new Set(rawWorks.map(w => w.category).filter(Boolean))];
+  }, [rawWorks]);
+
   const works = useMemo(() => {
     let processed = rawWorks.map((w, idx) => ({
       id: w.id,
       title: w.title,
       medium: w.medium,
-      category: w.category ? mapCategoryToUI(w.category) : 'Experimental',
+      category: w.category || 'Uncategorized',
       size: sizes[idx % 3], // Artificial masonry sizing for UI aesthetics
       image: resolveImageUrl(w.image),
       dimensions: w.dimensions || '18" x 24"',
@@ -256,31 +247,41 @@ export default function Gallery() {
             ))}
 
             {works.length === 0 && !isLoading && (
-              <div className="col-span-full py-32 flex flex-col items-center gap-6 text-center">
-                <div className="w-16 h-px bg-gold/30 mx-auto" />
-                <p className="font-serif text-3xl text-mist/60 font-light">
-                  {searchQuery || activeCat !== 'All' ? 'No artworks match your search.' : 'The gallery is empty.'}
-                </p>
-                <p className="font-sans text-xs tracking-[0.2em] text-mist/40 uppercase max-w-xs leading-relaxed">
+              <div className="col-span-full flex flex-col items-center justify-center min-h-[50vh] text-center border border-white/5 bg-void/50 p-12 relative overflow-hidden group">
+                {/* Ambient glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gold/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-gold/10 transition-colors duration-1000" />
+                
+                <div className="w-px h-16 bg-gradient-to-b from-transparent via-gold/50 to-transparent mb-8" />
+                
+                <h3 className="font-serif text-4xl text-cream font-light mb-4 tracking-wide">
+                  {searchQuery || activeCat !== 'All' ? 'No Masterpieces Found' : 'The Canvas is Blank'}
+                </h3>
+                
+                <p className="font-sans text-xs tracking-[0.2em] text-mist/60 uppercase max-w-md leading-relaxed mb-10">
                   {searchQuery || activeCat !== 'All' 
-                    ? 'Try a different category or search term.' 
-                    : 'Artworks uploaded by creators will appear here.'}
+                    ? 'Refine your search criteria to discover our curated collection of sketches and paintings.' 
+                    : 'No resident artists have published their work yet. Step into the studio and become the pioneer of this gallery.'}
                 </p>
+
                 {(searchQuery || activeCat !== 'All') ? (
                   <button 
                     onClick={() => { setSearchQuery(''); setActiveCat('All'); }}
-                    className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400"
+                    className="relative overflow-hidden font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-8 py-4 hover:bg-gold hover:text-void transition-all duration-500"
                   >
-                    Clear Filters
+                    <span className="relative z-10">Clear Filters</span>
                   </button>
                 ) : (
                   <Link 
                     to="/admin/artworks"
-                    className="font-sans text-[10px] tracking-[0.3em] text-gold uppercase border border-gold/30 px-6 py-3 hover:bg-gold hover:text-void transition-all duration-400"
+                    className="relative overflow-hidden font-sans text-[10px] tracking-[0.3em] text-void font-bold uppercase bg-ivory px-10 py-4 hover:bg-gold hover:text-void transition-all duration-500 group/btn"
                   >
-                    Upload First Artwork
+                    <span className="relative z-10 flex items-center gap-3">
+                      Start Your Gallery
+                      <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </span>
                   </Link>
                 )}
+                <div className="w-px h-16 bg-gradient-to-t from-transparent via-gold/50 to-transparent mt-12" />
               </div>
             )}
 
@@ -328,7 +329,7 @@ export default function Gallery() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-sans text-[9px] tracking-[0.3em] text-gold/90 uppercase drop-shadow-md">{work.medium}</div>
                       {work.price && (
-                        <div className="font-sans text-[10px] tracking-widest text-ivory drop-shadow-md">${work.price.toLocaleString()}</div>
+                        <div className="font-sans text-[10px] tracking-widest text-ivory drop-shadow-md">₹{work.price.toLocaleString()}</div>
                       )}
                     </div>
                     <div className="font-serif text-2xl text-cream drop-shadow-lg">{work.title}</div>
@@ -421,11 +422,11 @@ export default function Gallery() {
                       </div>
                       <div>
                         <div className="font-sans text-[9px] tracking-widest text-mist uppercase mb-1 flex items-center gap-1.5 justify-center md:justify-start">
-                          <DollarSign size={10} className="text-gold/80" />
+                          <IndianRupee size={10} className="text-gold/80" />
                           Value
                         </div>
                         <div className="font-serif text-lg text-cream">
-                          {selectedArtwork.price ? `$${selectedArtwork.price.toLocaleString()}` : 'Inquiry'}
+                          {selectedArtwork.price ? `₹${selectedArtwork.price.toLocaleString()}` : 'Inquiry'}
                         </div>
                       </div>
                     </div>

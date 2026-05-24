@@ -83,7 +83,7 @@ export default function CartSidebar() {
                         <Plus size={12} />
                       </button>
                     </div>
-                    <span className="font-sans text-sm text-gold">${(item.price * item.quantity).toLocaleString()}</span>
+                    <span className="font-sans text-sm text-gold">₹{(item.price * item.quantity).toLocaleString()}</span>
                   </div>
                 </div>
                 <button 
@@ -102,7 +102,7 @@ export default function CartSidebar() {
           <div className="p-6 bg-void/80 border-t border-white/5">
             <div className="flex justify-between items-end mb-6">
               <span className="font-sans text-xs tracking-widest uppercase text-mist">Subtotal</span>
-              <span className="font-serif text-3xl text-cream">${total.toLocaleString()}</span>
+              <span className="font-serif text-3xl text-cream">₹{total.toLocaleString()}</span>
             </div>
             <button 
               onClick={() => { closeCart(); navigate('/checkout'); }}

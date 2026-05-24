@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { resolveImageUrl } from '../../lib/axios';
-import { Mail, Clock, CheckCircle, XCircle, FileText, Calendar, DollarSign, ShieldAlert, MessageSquare } from 'lucide-react';
+import { Mail, Clock, CheckCircle, XCircle, FileText, Calendar, IndianRupee, ShieldAlert, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
@@ -235,7 +235,7 @@ export default function Commissions() {
                 <div className="bg-white/[0.02] border border-white/5 p-4 rounded text-xs font-sans flex justify-between items-center">
                   <div>
                     <p className="text-mist/50 uppercase tracking-wider text-[9px] mb-0.5">Advance Authorization</p>
-                    <p className="text-gold font-medium font-serif">${selectedInquiry.advanceAmount || '100.00'}</p>
+                    <p className="text-gold font-medium font-serif">₹{selectedInquiry.advanceAmount || '100.00'}</p>
                   </div>
                   <div>
                     <span className={`px-2 py-0.5 text-[8px] uppercase tracking-wider rounded-sm ${
@@ -250,7 +250,7 @@ export default function Commissions() {
                 {selectedInquiry.status === 'APPROVED' && (
                   <div className="bg-green-500/10 border border-green-500/25 p-4 rounded text-xs font-sans space-y-2">
                     <p className="text-green-400 uppercase tracking-wider text-[9px] font-bold">Negotiated Terms</p>
-                    <p className="text-ivory"><strong>Final Agreed Price</strong>: <span className="text-gold font-semibold">${selectedInquiry.finalPrice}</span></p>
+                    <p className="text-ivory"><strong>Final Agreed Price</strong>: <span className="text-gold font-semibold">₹{selectedInquiry.finalPrice}</span></p>
                     <p className="text-ivory"><strong>Submission/Delivery Date</strong>: {new Date(selectedInquiry.submissionDate).toLocaleDateString()}</p>
                   </div>
                 )}
@@ -417,9 +417,9 @@ export default function Commissions() {
 
             <form onSubmit={handleApproveSubmit} className="flex flex-col gap-6">
               <div className="group">
-                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Final Agreed Price ($)</label>
+                <label className="block font-sans text-[10px] tracking-[0.2em] text-mist uppercase mb-2">Final Agreed Price (₹)</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold font-semibold">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold font-semibold">₹</span>
                   <input
                     type="number"
                     value={negotiatedPrice}

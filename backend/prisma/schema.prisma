@@ -108,7 +108,7 @@ model Artwork {
   title         String
   description   String        @db.Text
   artworkStory  String?       @db.Text  // Emotional creation story
-  category      Category
+  category      String
   medium        String
   price         Float?
   status        ArtworkStatus @default(AVAILABLE)
@@ -139,13 +139,7 @@ model Artwork {
   updatedAt     DateTime      @updatedAt
 }
 
-enum Category {
-  PORTRAIT
-  PEN_ART
-  PAINTING
-  KRISHNA_ART
-  EXPERIMENTAL
-}
+
 
 enum ArtworkStatus {
   AVAILABLE

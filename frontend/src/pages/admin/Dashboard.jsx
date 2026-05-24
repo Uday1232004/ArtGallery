@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/axios';
-import { Image, Users, CalendarDays, DollarSign, ArrowUpRight } from 'lucide-react';
+import { Image, Users, CalendarDays, IndianRupee, ArrowUpRight } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { gsap } from '../../animations/gsap';
 
@@ -43,7 +43,7 @@ export default function Dashboard() {
   const statCards = [
     { title: 'Total Artworks', value: stats.totalArtworks, icon: Image, prefix: '' },
     { title: 'Total Orders', value: stats.totalOrders, icon: CalendarDays, prefix: '' },
-    { title: 'Total Revenue', value: stats.totalRevenue, icon: DollarSign, prefix: '$' },
+    { title: 'Total Revenue', value: stats.totalRevenue, icon: IndianRupee, prefix: '₹' },
     { title: 'Total Collectors', value: stats.totalUsers, icon: Users, prefix: '' },
   ];
 
@@ -103,7 +103,7 @@ export default function Dashboard() {
                   <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 text-ivory">#{order.id.substring(0,8)}</td>
                     <td className="px-6 py-4">{order.user.name}</td>
-                    <td className="px-6 py-4 text-gold font-medium">${order.total?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-gold font-medium">₹{order.total?.toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-[9px] uppercase tracking-wider rounded-sm ${
                         order.status === 'PENDING' ? 'bg-orange-500/20 text-orange-400' :

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useCartStore } from '../store/cartStore';
-import api, { normalizeImageUrl } from '../lib/axios';
+import api, { normalizeImageUrl, resolveImageUrl } from '../lib/axios';
 import { Package, Heart, Settings, LogOut, MessageSquare, Check, ShoppingBag, Camera, Save } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -273,43 +273,71 @@ export default function UserProfile() {
                   {isLoadingOrders ? (
                     <div className="text-mist text-sm animate-pulse">Loading orders...</div>
                   ) : orders.length === 0 ? (
-                    <div className="bg-void/50 border border-white/5 p-12 text-center">
-                      <p className="text-mist font-sans text-sm mb-4">You haven't acquired any artworks yet.</p>
-                      <button onClick={() => navigate('/gallery')} className="text-gold uppercase text-xs tracking-widest hover:text-ivory transition-colors">
-                        Explore Gallery
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] border border-white/5 bg-void/30 p-12 text-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                      <div className="w-12 h-px bg-gold/50 mb-6" />
+                      <h3 className="font-serif text-2xl text-cream font-light mb-3">No Acquisitions Yet</h3>
+                      <p className="text-mist/60 font-sans text-[10px] tracking-widest uppercase max-w-sm leading-relaxed mb-8">
+                        Your private collection awaits its first masterpiece. Discover unique sketches and paintings.
+                      </p>
+                      <button onClick={() => navigate('/gallery')} className="relative overflow-hidden font-sans text-[10px] tracking-[0.2em] text-void font-bold uppercase bg-ivory px-8 py-3.5 hover:bg-gold hover:text-void transition-all duration-500">
+                        <span className="relative z-10">Explore Gallery</span>
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       {orders.map(order => (
-                        <div key={order.id} className="bg-void/50 border border-white/5 p-6">
-                          <div className="flex flex-wrap justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div key={order.id} className="bg-void/50 border border-white/5 p-6 flex flex-col gap-6">
+                          <div className="flex flex-wrap justify-between items-center border-b border-white/5 pb-4">
                             <div>
                               <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1">Order #{order.id.substring(0, 8)}</p>
                               <p className="font-sans text-xs text-ivory/70">{new Date(order.createdAt).toLocaleDateString()}</p>
                             </div>
                             <div className="text-right">
                               <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1">Status</p>
-                              <p className={`font-sans text-xs uppercase tracking-widest ${
-                                order.status === 'COMPLETED' ? 'text-green-400' : 'text-gold'
+                              <p className={`font-sans text-xs uppercase tracking-widest font-semibold ${
+                                order.status === 'COMPLETED' || order.status === 'DELIVERED' ? 'text-green-400' :
+                                order.status === 'SHIPPED' ? 'text-blue-400' :
+                                order.status === 'PROCESSING' ? 'text-amber-400' :
+                                order.status === 'CANCELLED' ? 'text-red-400' :
+                                'text-gold'
                               }`}>{order.status}</p>
                             </div>
                             <div className="text-right">
                               <p className="font-sans text-[10px] text-mist tracking-widest uppercase mb-1">Total</p>
-                              <p className="font-serif text-lg text-cream">${order.total?.toLocaleString()}</p>
+                              <p className="font-serif text-lg text-cream">₹{order.total?.toLocaleString()}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/[0.02] p-4 border border-white/5 rounded-sm">
+                            <div>
+                              <p className="font-sans text-[9px] text-mist/50 uppercase tracking-widest mb-2">Shipping Information</p>
+                              <p className="font-sans text-xs text-ivory mb-1"><span className="text-mist">Name:</span> {order.shippingName}</p>
+                              <p className="font-sans text-xs text-ivory mb-1"><span className="text-mist">Address:</span> {order.shippingAddress}, {order.shippingCity} - {order.shippingPincode}</p>
+                              <p className="font-sans text-xs text-ivory"><span className="text-mist">Phone:</span> {order.shippingPhone || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="font-sans text-[9px] text-mist/50 uppercase tracking-widest mb-2">Payment Details</p>
+                              <p className="font-sans text-xs text-ivory mb-1"><span className="text-mist">Method:</span> {order.paymentMethod}</p>
+                              <p className="font-sans text-xs text-ivory">
+                                <span className="text-mist">Status:</span> 
+                                <span className={`ml-1 ${order.paymentStatus === 'PAID' ? 'text-green-400' : 'text-gold'}`}>{order.paymentStatus}</span>
+                              </p>
                             </div>
                           </div>
                           
                           <div className="space-y-4">
+                            <p className="font-sans text-[9px] text-mist/50 uppercase tracking-widest">Ordered Items</p>
                             {order.items.map(item => (
-                              <div key={item.id} className="flex items-center gap-6">
-                                <img src={item.artwork.image} alt={item.artwork.title} className="w-16 h-16 object-cover sepia-[0.2]" />
+                              <div key={item.id} className="flex items-center gap-6 bg-void/30 p-3 border border-white/5">
+                                <img src={resolveImageUrl(item.artwork.image)} alt={item.artwork.title} className="w-16 h-16 object-cover sepia-[0.2]" />
                                 <div className="flex-1">
-                                  <h4 className="font-serif text-lg text-ivory">{item.artwork.title}</h4>
-                                  <p className="font-sans text-[10px] text-mist uppercase tracking-widest">{item.artwork.medium}</p>
+                                  <h4 className="font-serif text-base text-ivory mb-1">{item.artwork.title}</h4>
+                                  <p className="font-sans text-[9px] text-mist uppercase tracking-widest">{item.artwork.medium}</p>
                                 </div>
-                                <div className="font-sans text-sm text-ivory">
-                                  ${item.price} × {item.quantity}
+                                <div className="font-sans text-sm text-ivory text-right">
+                                  <p>₹{item.price}</p>
+                                  <p className="text-[10px] text-mist/50 mt-1">Qty: {item.quantity}</p>
                                 </div>
                               </div>
                             ))}
@@ -328,10 +356,15 @@ export default function UserProfile() {
                   {isLoadingCommissions ? (
                     <div className="text-mist text-sm animate-pulse">Loading commissions...</div>
                   ) : commissions.length === 0 ? (
-                    <div className="bg-void/50 border border-white/5 p-12 text-center">
-                      <p className="text-mist font-sans text-sm mb-4">You haven't requested any custom commissions yet.</p>
-                      <button onClick={() => navigate('/commissions/request')} className="text-gold uppercase text-xs tracking-widest hover:text-ivory transition-colors">
-                        Request Custom Sketch
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] border border-white/5 bg-void/30 p-12 text-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                      <div className="w-12 h-px bg-gold/50 mb-6" />
+                      <h3 className="font-serif text-2xl text-cream font-light mb-3">No Custom Requests</h3>
+                      <p className="text-mist/60 font-sans text-[10px] tracking-widest uppercase max-w-sm leading-relaxed mb-8">
+                        Collaborate directly with our master artists to bring your personal vision to life.
+                      </p>
+                      <button onClick={() => navigate('/commissions/request')} className="relative overflow-hidden font-sans text-[10px] tracking-[0.2em] text-void font-bold uppercase bg-ivory px-8 py-3.5 hover:bg-gold hover:text-void transition-all duration-500">
+                        <span className="relative z-10">Request Custom Sketch</span>
                       </button>
                     </div>
                   ) : (
@@ -376,7 +409,7 @@ export default function UserProfile() {
                             {comm.status === 'APPROVED' && comm.finalPrice && (
                               <div className="mt-2 text-right flex flex-col items-end">
                                 <p className="font-sans text-[9px] text-mist/50 mb-0.5">Negotiated Price</p>
-                                <p className="font-serif text-lg text-gold font-semibold mb-2">${comm.finalPrice}</p>
+                                <p className="font-serif text-lg text-gold font-semibold mb-2">₹{comm.finalPrice}</p>
                                 
                                 {comm.artworkId && (
                                   <button
@@ -394,7 +427,7 @@ export default function UserProfile() {
                             {(comm.status === 'REJECTED' || comm.status === 'REFUNDED') && (
                               <div className="text-right">
                                 <p className="font-sans text-[9px] text-red-400/80 bg-red-950/20 px-2 py-1 border border-red-500/10 rounded">
-                                  Refunded: ${comm.advanceAmount || '100.00'}
+                                  Refunded: ₹{comm.advanceAmount || '100.00'}
                                 </p>
                               </div>
                             )}
@@ -402,7 +435,7 @@ export default function UserProfile() {
                             {comm.status === 'PENDING' && (
                               <div>
                                 <p className="font-sans text-[9px] text-mist/50 mb-0.5">Advance Deposit</p>
-                                <p className="font-sans text-xs text-green-400 font-semibold">Paid: ${comm.advanceAmount}</p>
+                                <p className="font-sans text-xs text-green-400 font-semibold">Paid: ₹{comm.advanceAmount}</p>
                               </div>
                             )}
 
@@ -433,21 +466,26 @@ export default function UserProfile() {
                   <h2 className="font-serif text-2xl text-cream mb-8">Saved Artworks</h2>
                   
                   {wishlistItems.length === 0 ? (
-                    <div className="bg-void/50 border border-white/5 p-12 text-center">
-                      <p className="text-mist font-sans text-sm mb-4">Your wishlist is empty.</p>
-                      <button onClick={() => navigate('/gallery')} className="text-gold uppercase text-xs tracking-widest hover:text-ivory transition-colors">
-                        Discover Art
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] border border-white/5 bg-void/30 p-12 text-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                      <div className="w-12 h-px bg-gold/50 mb-6" />
+                      <h3 className="font-serif text-2xl text-cream font-light mb-3">Your Wishlist is Empty</h3>
+                      <p className="text-mist/60 font-sans text-[10px] tracking-widest uppercase max-w-sm leading-relaxed mb-8">
+                        Save pieces that inspire you. Curate a personal board of your favorite artworks.
+                      </p>
+                      <button onClick={() => navigate('/gallery')} className="relative overflow-hidden font-sans text-[10px] tracking-[0.2em] text-gold uppercase border border-gold/30 px-8 py-3.5 hover:bg-gold hover:text-void transition-all duration-500">
+                        <span className="relative z-10">Discover Art</span>
                       </button>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {wishlistItems.map(item => (
                         <div key={item.id} className="group relative bg-void/30 border border-white/5 overflow-hidden">
-                          <img src={item.artwork.image} alt={item.artwork.title} className="w-full h-64 object-cover sepia-[0.1] group-hover:scale-105 transition-transform duration-1000" />
+                          <img src={resolveImageUrl(item.artwork.image)} alt={item.artwork.title} className="w-full h-64 object-cover sepia-[0.1] group-hover:scale-105 transition-transform duration-1000" />
                           <div className="p-6">
                             <h4 className="font-serif text-xl text-cream mb-2">{item.artwork.title}</h4>
                             <div className="flex justify-between items-center">
-                              <span className="font-sans text-[10px] tracking-widest text-gold uppercase">{item.artwork.price ? `$${item.artwork.price}` : 'Inquiry'}</span>
+                              <span className="font-sans text-[10px] tracking-widest text-gold uppercase">{item.artwork.price ? `₹${item.artwork.price}` : 'Inquiry'}</span>
                               <button onClick={() => navigate(`/artworks/${item.artwork.id}`)} className="font-sans text-[10px] tracking-widest text-mist uppercase hover:text-ivory transition-colors">
                                 View Details
                               </button>

@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { gsap } from '../animations/gsap';
+import { motion, AnimatePresence } from 'framer-motion';
 import api, { resolveImageUrl } from '../lib/axios';
 import Navbar from '../components/Navbar';
 import Footer from '../sections/Footer';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useAuthStore } from '../store/authStore';
-import { Award, Calendar, Layers, DollarSign, Heart, ShoppingBag, ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
+import { Award, Calendar, Layers, IndianRupee, Heart, ShoppingBag, ArrowLeft, ShieldCheck, Truck, X } from 'lucide-react';
 
 export default function ArtworkDetail() {
   const { id } = useParams();
   const { isAuthenticated } = useAuthStore();
   const { addItem: addToCart } = useCartStore();
   const { toggleWishlist, isWishlisted } = useWishlistStore();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const { data: artwork, isLoading, error } = useQuery({
     queryKey: ['artwork', id],
@@ -98,7 +100,8 @@ export default function ArtworkDetail() {
                 <img 
                   src={resolveImageUrl(artwork.image)} 
                   alt={artwork.title} 
-                  className="w-full h-auto object-cover shadow-2xl img-cinematic sepia-[0.1]"
+                  className="w-full h-auto object-cover shadow-2xl img-cinematic sepia-[0.1] cursor-zoom-in"
+                  onClick={() => setIsPreviewOpen(true)}
                   onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&q=80'; }}
                 />
               </div>
@@ -128,7 +131,7 @@ export default function ArtworkDetail() {
                 
                 {artwork.price && (
                   <div className="font-sans text-2xl text-ivory tracking-wider mb-8">
-                    ${artwork.price.toLocaleString()}
+                    ₹{artwork.price.toLocaleString()}
                   </div>
                 )}
               </div>
@@ -210,6 +213,37 @@ export default function ArtworkDetail() {
           </div>
         </div>
       </main>
+
+      {/* Full Preview Modal */}
+      <AnimatePresence>
+        {isPreviewOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 md:p-8 cursor-zoom-out"
+            onClick={() => setIsPreviewOpen(false)}
+          >
+            <button 
+              className="absolute top-6 right-6 lg:top-10 lg:right-10 text-mist hover:text-gold transition-colors z-[101] bg-void/50 p-3 rounded-full border border-white/10"
+              onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}
+            >
+              <X size={24} />
+            </button>
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              src={resolveImageUrl(artwork.image)} 
+              alt={artwork.title} 
+              className="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-sm cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

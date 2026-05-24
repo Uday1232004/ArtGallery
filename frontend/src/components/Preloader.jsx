@@ -12,6 +12,12 @@ export default function Preloader({ onComplete }) {
   const barRef = useRef(null)
   const taglineRef = useRef(null)
 
+  const onCompleteRef = useRef(onComplete)
+  
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
+
   useEffect(() => {
     const el = preloaderRef.current
     const counter = counterRef.current
@@ -21,7 +27,7 @@ export default function Preloader({ onComplete }) {
     let count = { val: 0 }
     const tl = gsap.timeline({
       onComplete: () => {
-        onComplete?.()
+        onCompleteRef.current?.()
       },
     })
 
@@ -73,7 +79,7 @@ export default function Preloader({ onComplete }) {
     tl.set(el, { display: 'none' })
 
     return () => tl.kill()
-  }, [onComplete])
+  }, [])
 
   const brand = 'ArtBro Sketches'
 

@@ -27,28 +27,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
 import EditProfileModal from '../../components/profile/EditProfileModal';
 
-const mapUIToServerCategory = (uiCategory) => {
-  switch (uiCategory) {
-    case 'Realistic Portrait': return 'PORTRAIT';
-    case 'Pen Art': return 'PEN_ART';
-    case 'Charcoal Sketch': return 'PAINTING';
-    case 'Devotional Painting': return 'KRISHNA_ART';
-    default: return 'EXPERIMENTAL';
-  }
-};
-
-const mapServerToUICategory = (serverCategory) => {
-  switch (serverCategory) {
-    case 'PORTRAIT': return 'Realistic Portrait';
-    case 'PEN_ART': return 'Pen Art';
-    case 'PAINTING': return 'Charcoal Sketch';
-    case 'KRISHNA_ART': return 'Devotional Painting';
-    default: return 'Charcoal Sketch';
-  }
-};
-
-const categoriesList = ['Realistic Portrait', 'Pen Art', 'Charcoal Sketch', 'Devotional Painting'];
-
 export default function Artworks() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
@@ -65,7 +43,7 @@ export default function Artworks() {
   
   // Form States
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Pen Art');
+  const [category, setCategory] = useState('');
   const [medium, setMedium] = useState('');
   const [year, setYear] = useState('');
   const [dimensions, setDimensions] = useState('');
@@ -131,7 +109,7 @@ export default function Artworks() {
 
   const resetForm = () => {
     setTitle('');
-    setCategory('Pen Art');
+    setCategory('');
     setMedium('');
     setYear(new Date().getFullYear().toString());
     setDimensions('');
@@ -169,7 +147,7 @@ export default function Artworks() {
     resetForm();
     setEditingArtwork(art);
     setTitle(art.title || '');
-    setCategory(art.category ? mapServerToUICategory(art.category) : 'Pen Art');
+    setCategory(art.category || '');
     setMedium(art.medium || '');
     setYear(art.yearCreated ? art.yearCreated.toString() : '');
     setDimensions(art.dimensions || '');
@@ -275,7 +253,7 @@ export default function Artworks() {
 
     const formData = new FormData();
     formData.append('title', title);
-    formData.append('category', mapUIToServerCategory(category));
+    formData.append('category', category);
     formData.append('medium', medium);
     formData.append('yearCreated', year || new Date().getFullYear());
     formData.append('dimensions', dimensions);
@@ -311,8 +289,6 @@ export default function Artworks() {
   if (isError) {
     return <div className="text-red-400 font-sans p-6 bg-red-950/20 border border-red-500/20 rounded">Failed to load creator portfolios. Check server logs.</div>;
   }
-
-  const categoriesList = ['Pen Art', 'Realistic Portrait', 'Charcoal Sketch', 'Devotional Painting'];
 
   // Global counts for adminFALLBACK
   const globalSoldCount = myArtworks.filter(art => art.status === 'SOLD').length;
@@ -484,7 +460,7 @@ export default function Artworks() {
                     <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 gap-4">
                       <div className="text-center">
                         <h4 className="font-serif text-sm text-cream truncate max-w-[150px] mb-1">{artwork.title}</h4>
-                        <span className="text-[9px] text-gold tracking-wide uppercase font-semibold">{mapServerToUICategory(artwork.category)}</span>
+                        <span className="text-[9px] text-gold tracking-wide uppercase font-semibold">{artwork.category}</span>
                       </div>
                       
                       <div className="flex gap-3 mt-1">
@@ -544,7 +520,7 @@ export default function Artworks() {
                         <td className="p-5 font-serif text-cream text-base">{art.title}</td>
                         <td className="p-5">
                           <span className="px-2 py-0.5 text-[9px] bg-white/5 border border-white/10 rounded uppercase text-mist/70 tracking-wider">
-                            {mapServerToUICategory(art.category)}
+                            {art.category}
                           </span>
                         </td>
                         <td className="p-5">
@@ -715,13 +691,14 @@ export default function Artworks() {
                     {/* Shading Category Selector */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[8.5px] tracking-wider text-mist uppercase font-semibold">Category Medium *</label>
-                      <select
+                      <input
+                        type="text"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
+                        required
                         className="bg-zinc-900 border border-white/5 rounded px-3 py-2 text-cream outline-none focus:border-gold/30 transition-colors"
-                      >
-                        {categoriesList.map(cat => <option key={cat} value={cat} className="bg-zinc-950 text-cream">{cat}</option>)}
-                      </select>
+                        placeholder="e.g. Realistic Portrait"
+                      />
                     </div>
 
                     {/* Specifications Inline */}

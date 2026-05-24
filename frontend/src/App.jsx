@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { CursorProvider } from './context/CursorContext'
 import Cursor from './components/Cursor'
 import Navbar from './components/Navbar'
 import CartSidebar from './components/CartSidebar'
@@ -31,11 +32,32 @@ import { getLenis } from './animations/lenis'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin, isHydrating } = useAuthStore();
+  const storeHydrated = useAuthStore.persist.hasHydrated();
   
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (requireAdmin && !isAdmin()) return <Navigate to="/profile" replace />;
+  console.log('[ProtectedRoute] Evaluation. storeHydrated:', storeHydrated, 'isHydrating:', isHydrating, 'isAuthenticated:', isAuthenticated);
   
+  if (!storeHydrated || isHydrating) {
+    console.log('[ProtectedRoute] Route evaluation suspended. Zustand is still hydrating or validating.');
+    return (
+      <div className="min-h-screen bg-void flex items-center justify-center pencil-texture relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(222,214,199,0.05)_0%,transparent_80%)] z-0" />
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin z-10" />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    console.log('[ProtectedRoute] User not authenticated. Redirecting to /login.');
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (requireAdmin && !isAdmin()) {
+    console.log('[ProtectedRoute] User is not authorized as Admin. Redirecting to /profile.');
+    return <Navigate to="/profile" replace />;
+  }
+  
+  console.log('[ProtectedRoute] Access granted.');
   return children;
 };
 
@@ -44,12 +66,33 @@ export default function App() {
   const isAdminOrLogin = location.pathname.startsWith('/admin') || location.pathname === '/login' || location.pathname === '/signup';
 
   const { fetchCart } = useCartStore();
-  const { isAuthenticated, isHydrating, initAuth } = useAuthStore();
+  const { isAuthenticated, isHydrating, user, initAuth } = useAuthStore();
+  const [storeHydrated, setStoreHydrated] = useState(false);
 
+  // 1. Listen to Zustand store hydration completion
   useEffect(() => {
-    initAuth();
+    console.log('[App Mount] Checking store hydration state. hasHydrated:', useAuthStore.persist.hasHydrated());
+    
+    if (useAuthStore.persist.hasHydrated()) {
+      setStoreHydrated(true);
+    } else {
+      const unsub = useAuthStore.persist.onFinishHydration(() => {
+        console.log('[App] Zustand store hydration finished.');
+        setStoreHydrated(true);
+      });
+      return unsub;
+    }
   }, []);
 
+  // 2. Once store is hydrated, trigger initAuth if isHydrating is true
+  useEffect(() => {
+    if (storeHydrated && isHydrating) {
+      console.log('[App] Store is hydrated and auth is not initialized yet. Explicitly triggering initAuth.');
+      initAuth();
+    }
+  }, [storeHydrated, isHydrating, initAuth]);
+
+  // 3. Fetch cart when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchCart();
@@ -85,8 +128,9 @@ export default function App() {
     }
   }, [location.pathname, location.hash]);
 
-  // Prevent UI flicker by waiting for auth hydration
-  if (isHydrating) {
+  // Prevent UI flicker by waiting for both Zustand hydration and backend token verification
+  if (!storeHydrated || isHydrating) {
+    console.log('[App Render] Blocking UI with spinner during hydration. storeHydrated:', storeHydrated, 'isHydrating:', isHydrating);
     return (
       <div className="min-h-screen bg-void flex items-center justify-center pencil-texture relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(222,214,199,0.05)_0%,transparent_80%)] z-0" />
@@ -96,8 +140,8 @@ export default function App() {
   }
 
   return (
-    <div className="noise-overlay min-h-screen bg-void text-mist">
-      <Cursor />
+    <CursorProvider>
+      <div className="noise-overlay min-h-screen bg-void text-mist">
       <CartSidebar />
       <ToastContainer />
       
@@ -128,5 +172,6 @@ export default function App() {
         </Route>
       </Routes>
     </div>
+    </CursorProvider>
   )
 }

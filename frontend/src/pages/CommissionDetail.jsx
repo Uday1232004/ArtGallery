@@ -5,7 +5,7 @@ import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import { useState } from 'react';
 import { 
-  ArrowLeft, Calendar, DollarSign, FileText, Phone, MapPin, 
+  ArrowLeft, Calendar, IndianRupee, FileText, Phone, MapPin, 
   MessageSquare, User, ShoppingBag, Clock, CheckCircle2, AlertTriangle, ShieldCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -141,7 +141,7 @@ export default function CommissionDetail() {
               <p className="font-sans text-xs text-mist/75 leading-relaxed">
                 This commission request has been {commission.status.toLowerCase()}. 
                 {commission.status === 'REFUNDED' || commission.status === 'REJECTED' ? 
-                  ` The holding deposit of $${commission.advanceAmount || '100.00'} has been successfully reversed to your credit card.` : 
+                  ` The holding deposit of ₹${commission.advanceAmount || '100.00'} has been successfully reversed to your credit card.` : 
                   ' Please check the artist\'s notes below for more feedback.'
                 }
               </p>
@@ -288,7 +288,7 @@ export default function CommissionDetail() {
               {/* Deposit hold display */}
               <div className="flex justify-between items-center text-xs font-sans border-b border-white/5 pb-3">
                 <span className="text-mist/60 flex items-center gap-1.5"><ShieldCheck size={14} className="text-gold" /> Advance Verification Deposit</span>
-                <span className="text-cream font-medium">${commission.advanceAmount || '100.00'}</span>
+                <span className="text-cream font-medium">₹{commission.advanceAmount || '100.00'}</span>
               </div>
 
               {commission.status === 'APPROVED' && commission.finalPrice && (
@@ -302,7 +302,7 @@ export default function CommissionDetail() {
                   
                   <div className="flex justify-between items-center font-sans text-xs">
                     <span className="text-mist/60">Final Price (Negotiated)</span>
-                    <span className="text-gold font-serif text-xl font-semibold">${commission.finalPrice}</span>
+                    <span className="text-gold font-serif text-xl font-semibold">₹{commission.finalPrice}</span>
                   </div>
 
                   {commission.submissionDate && (

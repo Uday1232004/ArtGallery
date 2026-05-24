@@ -44,7 +44,10 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  cursor: none; /* Custom cursor */
+  ::selection {
+    background: rgba(201, 169, 110, 0.3);
+    color: var(--ivory);
+  }
 }
 
 /* ─── Custom Scrollbar ────────────────────────────────── */
@@ -198,49 +201,7 @@ html.lenis {
 }
 
 /* ─── Custom cursor ───────────────────────────────────── */
-#custom-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-}
-
-#cursor-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--ivory);
-  border-radius: 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s var(--ease-expo), height 0.3s var(--ease-expo);
-}
-
-#cursor-ring {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(250, 248, 245, 0.4);
-  border-radius: 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  transition: width 0.4s var(--ease-expo), height 0.4s var(--ease-expo), border-color 0.3s;
-}
-
-body:hover #cursor-ring {
-  opacity: 1;
-}
-
-/* Cursor hover state */
-body.cursor-hover #cursor-dot {
-  width: 4px;
-  height: 4px;
-}
-body.cursor-hover #cursor-ring {
-  width: 60px;
-  height: 60px;
-  border-color: var(--gold);
-}
+/* Removed old CSS cursor logic - now handled entirely by React/GSAP */
 
 /* ─── Preloader ───────────────────────────────────────── */
 #preloader {
@@ -271,8 +232,6 @@ body.cursor-hover #cursor-ring {
 
 @media (max-width: 640px) {
   .masonry-grid { columns: 1; }
-  body { cursor: auto; }
-  #custom-cursor { display: none; }
 }
 
 /* ─── Animations ──────────────────────────────────────── */
@@ -309,4 +268,8 @@ body.cursor-hover #cursor-ring {
 
 .rotate-slowly {
   animation: rotateSlowly 30s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: rotateSlowly 8s linear infinite;
 }

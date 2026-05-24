@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../lib/axios';
+import api, { resolveImageUrl } from '../../lib/axios';
 import { Calendar, MapPin, Plus, Trash2, Edit, Save, X, Image as ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -219,7 +219,7 @@ export default function Exhibitions() {
             <div key={exh.id} className="bg-carbon/30 border border-white/5 rounded-lg overflow-hidden group flex flex-col h-full relative">
               <div className="aspect-[21/9] w-full bg-void/50 overflow-hidden relative border-b border-white/5">
                 <img
-                  src={exh.bannerImage || "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80"}
+                  src={exh.bannerImage ? resolveImageUrl(exh.bannerImage) : "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80"}
                   alt={exh.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
                 />
@@ -314,7 +314,7 @@ export default function Exhibitions() {
                   <label className="font-sans text-[10px] tracking-wider text-mist uppercase">Cover/Banner Image</label>
                   <div className="border border-white/5 bg-void/20 rounded overflow-hidden aspect-[21/9] relative group">
                     {previewUrl ? (
-                      <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                      <img src={resolveImageUrl(previewUrl)} alt="Banner Preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-mist/30 font-sans gap-2">
                         <ImageIcon size={32} />
@@ -417,7 +417,7 @@ export default function Exhibitions() {
                             }`}
                           >
                             <div className="w-full aspect-[4/3] rounded overflow-hidden bg-void/50 border border-white/5">
-                              <img src={art.image} alt={art.title} className="w-full h-full object-cover" />
+                              <img src={resolveImageUrl(art.image)} alt={art.title} className="w-full h-full object-cover" />
                             </div>
                             <span className="font-serif text-xs truncate w-full font-medium">{art.title}</span>
                           </button>

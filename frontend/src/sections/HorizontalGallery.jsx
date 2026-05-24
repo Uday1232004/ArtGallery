@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap } from '../animations/gsap'
+import { Link } from 'react-router-dom'
+import { useCursor } from '../context/CursorContext'
 
 const PROCESS_STEPS = [
   { step: '01', title: 'Pen Art', desc: 'Intricate detailing and fine strokes constructed using professional fineliners to bring complex patterns to life.', image: '/Bijay Biswal.jpeg' },
@@ -13,6 +15,7 @@ export default function HorizontalGallery() {
   const wrapperRef = useRef(null)
   const trackRef = useRef(null)
   const progressRef = useRef(null)
+  const { setHoverState, resetCursor } = useCursor()
 
   useEffect(() => {
     const wrapper = wrapperRef.current
@@ -116,7 +119,11 @@ export default function HorizontalGallery() {
             className="process-card flex-shrink-0 flex flex-col gap-6"
             style={{ width: 'clamp(280px, 32vw, 420px)' }}
           >
-            <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+            <div 
+              className="relative aspect-[3/4] overflow-hidden rounded-sm"
+              onMouseEnter={() => setHoverState('artwork', step.title)}
+              onMouseLeave={resetCursor}
+            >
               <img src={step.image} alt={step.title} className="w-full h-full object-cover img-cinematic mix-blend-luminosity opacity-90" />
               <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent opacity-60" />
               <div className="absolute top-4 left-4 font-serif text-4xl text-ivory/20">{step.step}</div>
